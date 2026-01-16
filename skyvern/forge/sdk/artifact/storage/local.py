@@ -163,6 +163,11 @@ class LocalStorage(BaseStorage):
             return None
 
     async def get_share_link(self, artifact: Artifact) -> str | None:
+        # Return file:// URI for local storage
+        # The frontend handles file:// URIs by converting them to artifact API URLs
+        # This is needed for recordings to work in the GUI
+        if artifact.uri:
+            return artifact.uri
         return None
 
     async def get_share_links(self, artifacts: list[Artifact]) -> list[str] | None:

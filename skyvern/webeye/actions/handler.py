@@ -1575,13 +1575,40 @@ async def handle_upload_file_action(
             locator = file_input_locator
             is_file_input = True
 
+    if not is_file_input:
+        LOG.info("Trying to find file input nearby (siblings/parent)", action=action)
+        nearby_input_locator = await skyvern_element.find_nearby_file_input()
+        if nearby_input_locator:
+            LOG.info("Found file input nearby", action=action)
+            locator = nearby_input_locator
+            is_file_input = True
+
     if is_file_input:
         LOG.info("Taking UploadFileAction. Found file input tag", action=action)
         if file_path:
+            LOG.info(
+                "Uploading file via set_input_files",
+                action=action,
+                file_path=file_path,
+                locator=str(locator),
+            )
             await locator.set_input_files(
                 file_path,
                 timeout=settings.BROWSER_ACTION_TIMEOUT_MS,
             )
+
+            # Dispatch native events to ensure React/Vue/Angular components detect the change
+            # This is necessary because set_input_files may not trigger synthetic event handlers
+            try:
+                await locator.dispatch_event("input")
+                await locator.dispatch_event("change")
+                LOG.info("Dispatched input and change events after file upload", action=action)
+            except Exception as e:
+                LOG.warning(
+                    "Failed to dispatch events after file upload, continuing anyway",
+                    action=action,
+                    error=str(e),
+                )
 
             # Sleep for 10 seconds after uploading a file to let the page process it
             await asyncio.sleep(10)
@@ -2342,14 +2369,15 @@ async def chain_click(
     pending_upload_files: list[str] | str | None = None,
     timeout: int = settings.BROWSER_ACTION_TIMEOUT_MS,
 ) -> List[ActionResult]:
-    # Add a defensive page handler here in case a click action opens a file chooser.
-    # This automatically dismisses the dialog
-    # File choosers are impossible to close if you don't expect one. Instead of dealing with it, close it!
+    """
+    Clicks on an element and handles file chooser dialogs if they appear.
+    Uses expect_file_chooser context manager for more reliable detection.
+    """
 
     dom = DomUtil(scraped_page=scraped_page, page=page)
     locator = skyvern_element.locator
-    # TODO (suchintan): This should likely result in an ActionFailure -- we can figure out how to do this later!
     LOG.info("Chain click starts", action=action, locator=locator)
+    
     file = pending_upload_files or []
     if not file and action.file_url:
         file_url = get_actual_value_of_parameter_if_secret_with_task(task, action.file_url)
@@ -2357,9 +2385,11 @@ async def chain_click(
 
     is_filechooser_trigger = False
 
+    # Use event listener as a fallback for file choosers
     async def fc_func(fc: FileChooser) -> None:
         nonlocal is_filechooser_trigger
         is_filechooser_trigger = True
+        LOG.info("File chooser triggered via event listener", action=action)
         await fc.set_files(files=file)
 
     page.on("filechooser", fc_func)
@@ -2533,9 +2563,42 @@ async def chain_click(
 
         if action.file_url and not is_filechooser_trigger:
             LOG.warning(
-                "Action has file_url, but filechoose even hasn't been triggered. Upload file attempt seems to fail",
+                "Action has file_url, but filechooser event hasn't been triggered. Trying fallback approach.",
                 action=action,
             )
+            
+            # Fallback: try to find file input in nearby DOM and upload directly
+            try:
+                # Try children first
+                file_input_locator = await skyvern_element.find_file_input_in_children()
+                if not file_input_locator:
+                    # Try nearby (parents/siblings)
+                    file_input_locator = await skyvern_element.find_nearby_file_input()
+                
+                if file_input_locator and file:
+                    LOG.info(
+                        "Fallback: Found file input, attempting direct upload via set_input_files",
+                        action=action,
+                    )
+                    await file_input_locator.set_input_files(
+                        file,
+                        timeout=settings.BROWSER_ACTION_TIMEOUT_MS,
+                    )
+                    # Dispatch events to trigger React/Vue handlers
+                    try:
+                        await file_input_locator.dispatch_event("input")
+                        await file_input_locator.dispatch_event("change")
+                    except Exception:
+                        pass
+                    await asyncio.sleep(10)
+                    return [ActionSuccess()]
+            except Exception as fallback_error:
+                LOG.warning(
+                    "Fallback file upload also failed",
+                    action=action,
+                    error=str(fallback_error),
+                )
+            
             return [ActionFailure(WrongElementToUploadFile(action.element_id))]
 
 
