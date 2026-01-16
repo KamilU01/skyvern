@@ -207,6 +207,8 @@ class BrowserContextFactory:
         extra_http_headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         video_dir = f"{settings.VIDEO_PATH}/{datetime.utcnow().strftime('%Y-%m-%d')}"
+        os.makedirs(video_dir, exist_ok=True)
+        LOG.info("Video recording directory configured", video_dir=video_dir, exists=os.path.exists(video_dir))
         har_dir = (
             f"{settings.HAR_PATH}/{datetime.utcnow().strftime('%Y-%m-%d')}/{BrowserContextFactory.get_subdir()}.har"
         )
