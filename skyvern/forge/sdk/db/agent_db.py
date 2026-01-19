@@ -211,6 +211,7 @@ class AgentDB(BaseAlchemyDB):
         browser_session_id: str | None = None,
         browser_address: str | None = None,
         download_timeout: float | None = None,
+        host_resolver_rules: str | None = None,
     ) -> Task:
         try:
             async with self.Session() as session:
@@ -243,6 +244,7 @@ class AgentDB(BaseAlchemyDB):
                     browser_session_id=browser_session_id,
                     browser_address=browser_address,
                     download_timeout=download_timeout,
+                    host_resolver_rules=host_resolver_rules,
                 )
                 session.add(new_task)
                 await session.commit()
