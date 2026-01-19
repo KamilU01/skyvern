@@ -245,6 +245,7 @@ class Skyvern(AsyncSkyvern):
         include_action_history_in_verification: bool | None = None,
         max_screenshot_scrolls: int | None = None,
         browser_address: str | None = None,
+        host_resolver_rules: str | None = None,
         request_options: RequestOptions | None = None,
     ) -> TaskRunResponse:
         task_run = await super().run_task(
@@ -267,6 +268,7 @@ class Skyvern(AsyncSkyvern):
             include_action_history_in_verification=include_action_history_in_verification,
             max_screenshot_scrolls=max_screenshot_scrolls,
             browser_address=browser_address,
+            host_resolver_rules=host_resolver_rules,
             request_options=request_options,
         )
 
@@ -296,6 +298,7 @@ class Skyvern(AsyncSkyvern):
         max_screenshot_scrolls: int | None = None,
         extra_http_headers: dict[str, str] | None = None,
         browser_address: str | None = None,
+        host_resolver_rules: str | None = None,
         ai_fallback: bool | None = None,
         run_with: str | None = None,
         wait_for_completion: bool = False,
@@ -318,6 +321,7 @@ class Skyvern(AsyncSkyvern):
             max_screenshot_scrolls=max_screenshot_scrolls,
             extra_http_headers=extra_http_headers,
             browser_address=browser_address,
+            host_resolver_rules=host_resolver_rules,
             ai_fallback=ai_fallback,
             run_with=run_with,
             request_options=request_options,

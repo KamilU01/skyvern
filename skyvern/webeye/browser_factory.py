@@ -205,6 +205,7 @@ class BrowserContextFactory:
         proxy_location: ProxyLocation | None = None,
         cdp_port: int | None = None,
         extra_http_headers: dict[str, str] | None = None,
+        host_resolver_rules: str | None = None,
     ) -> dict[str, Any]:
         video_dir = f"{settings.VIDEO_PATH}/{datetime.utcnow().strftime('%Y-%m-%d')}"
         os.makedirs(video_dir, exist_ok=True)
@@ -238,6 +239,12 @@ class BrowserContextFactory:
             browser_args.extend([f"--disable-extensions-except={joined_paths}", f"--load-extension={joined_paths}"])
             LOG.info("Extensions added to browser args", extensions=joined_paths)
 
+        # Build host resolver rules from both env config and request parameter
+        combined_host_rules = _build_host_resolver_rules(host_resolver_rules)
+        if combined_host_rules:
+            browser_args.append(f"--host-resolver-rules={combined_host_rules}")
+            LOG.info("Host resolver rules added to browser args", rules=combined_host_rules)
+
         args = {
             "locale": settings.BROWSER_LOCALE,
             "color_scheme": "no-preference",
@@ -245,6 +252,7 @@ class BrowserContextFactory:
             "ignore_default_args": [
                 "--enable-automation",
             ],
+            "ignore_https_errors": True,
             "record_har_path": har_dir,
             "record_video_dir": video_dir,
             "viewport": {
@@ -315,6 +323,36 @@ class BrowserContextFactory:
                 raise e
 
             raise UnknownErrorWhileCreatingBrowserContext(browser_type, e) from e
+
+
+def _build_host_resolver_rules(request_rules: str | None = None) -> str:
+    """
+    Build Chromium host resolver rules from both environment config and request parameter.
+
+    Format: hostname:ip,hostname2:ip2
+    Chromium format: MAP hostname ip, MAP hostname2 ip2
+
+    Request rules take precedence and are appended after env rules.
+    """
+    rules = []
+
+    # Add environment-based rules
+    if settings.BROWSER_HOST_RESOLVER_RULES:
+        for mapping in settings.BROWSER_HOST_RESOLVER_RULES.split(","):
+            mapping = mapping.strip()
+            if ":" in mapping:
+                hostname, ip = mapping.split(":", 1)
+                rules.append(f"MAP {hostname.strip()} {ip.strip()}")
+
+    # Add request-based rules (overrides env rules for same hostname)
+    if request_rules:
+        for mapping in request_rules.split(","):
+            mapping = mapping.strip()
+            if ":" in mapping:
+                hostname, ip = mapping.split(":", 1)
+                rules.append(f"MAP {hostname.strip()} {ip.strip()}")
+
+    return ", ".join(rules)
 
 
 def setup_proxy() -> dict | None:
@@ -456,8 +494,12 @@ async def _create_headless_chromium(
         download_dir=download_dir,
     )
     cdp_port: int | None = _get_cdp_port(kwargs)
+    host_resolver_rules: str | None = cast(str | None, kwargs.get("host_resolver_rules"))
     browser_args = BrowserContextFactory.build_browser_args(
-        proxy_location=proxy_location, cdp_port=cdp_port, extra_http_headers=extra_http_headers
+        proxy_location=proxy_location,
+        cdp_port=cdp_port,
+        extra_http_headers=extra_http_headers,
+        host_resolver_rules=host_resolver_rules,
     )
     browser_args.update(
         {
@@ -521,8 +563,12 @@ async def _create_headful_chromium(
         download_dir=download_dir,
     )
     cdp_port: int | None = _get_cdp_port(kwargs)
+    host_resolver_rules: str | None = cast(str | None, kwargs.get("host_resolver_rules"))
     browser_args = BrowserContextFactory.build_browser_args(
-        proxy_location=proxy_location, cdp_port=cdp_port, extra_http_headers=extra_http_headers
+        proxy_location=proxy_location,
+        cdp_port=cdp_port,
+        extra_http_headers=extra_http_headers,
+        host_resolver_rules=host_resolver_rules,
     )
     browser_args.update(
         {
