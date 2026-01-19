@@ -204,6 +204,7 @@ async def run_task(
             max_screenshot_scrolls=run_request.max_screenshot_scrolls,
             extra_http_headers=run_request.extra_http_headers,
             browser_address=run_request.browser_address,
+            host_resolver_rules=run_request.host_resolver_rules,
         )
         task_v1_response = await task_v1_service.run_task(
             task=task_v1_request,
@@ -363,6 +364,7 @@ async def run_workflow(
         max_screenshot_scrolls=workflow_run_request.max_screenshot_scrolls,
         extra_http_headers=workflow_run_request.extra_http_headers,
         browser_address=workflow_run_request.browser_address,
+        host_resolver_rules=workflow_run_request.host_resolver_rules,
         run_with=workflow_run_request.run_with,
         ai_fallback=workflow_run_request.ai_fallback,
     )
