@@ -116,6 +116,7 @@ class TaskModel(Base):
     model = Column(JSON, nullable=True)
     browser_address = Column(String, nullable=True)
     download_timeout = Column(Numeric, nullable=True)
+    host_resolver_rules = Column(String, nullable=True)
 
 
 class StepModel(Base):
