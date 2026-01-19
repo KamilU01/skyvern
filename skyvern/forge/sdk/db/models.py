@@ -342,6 +342,7 @@ class WorkflowRunModel(Base):
     max_screenshot_scrolling_times = Column(Integer, nullable=True)
     extra_http_headers = Column(JSON, nullable=True)
     browser_address = Column(String, nullable=True)
+    host_resolver_rules = Column(String, nullable=True)
     script_run = Column(JSON, nullable=True)
     job_id = Column(String, nullable=True, index=True)
     depends_on_workflow_run_id = Column(String, nullable=True, index=True)

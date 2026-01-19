@@ -2422,6 +2422,7 @@ class WorkflowService:
             max_screenshot_scrolling_times=workflow_request.max_screenshot_scrolls,
             extra_http_headers=workflow_request.extra_http_headers,
             browser_address=workflow_request.browser_address,
+            host_resolver_rules=workflow_request.host_resolver_rules,
             sequential_key=sequential_key,
             run_with=workflow_request.run_with,
             debug_session_id=debug_session_id,

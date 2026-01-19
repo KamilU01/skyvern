@@ -156,6 +156,7 @@ class Skyvern:
         max_screenshot_scrolls: typing.Optional[int] = OMIT,
         browser_address: typing.Optional[str] = OMIT,
         run_with: typing.Optional[str] = OMIT,
+        host_resolver_rules: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> TaskRunResponse:
         """
@@ -298,6 +299,7 @@ class Skyvern:
             max_screenshot_scrolls=max_screenshot_scrolls,
             browser_address=browser_address,
             run_with=run_with,
+            host_resolver_rules=host_resolver_rules,
             request_options=request_options,
         )
         return _response.data
@@ -320,6 +322,7 @@ class Skyvern:
         max_screenshot_scrolls: typing.Optional[int] = OMIT,
         extra_http_headers: typing.Optional[typing.Dict[str, typing.Optional[str]]] = OMIT,
         browser_address: typing.Optional[str] = OMIT,
+        host_resolver_rules: typing.Optional[str] = OMIT,
         ai_fallback: typing.Optional[bool] = OMIT,
         run_with: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -441,6 +444,7 @@ class Skyvern:
             max_screenshot_scrolls=max_screenshot_scrolls,
             extra_http_headers=extra_http_headers,
             browser_address=browser_address,
+            host_resolver_rules=host_resolver_rules,
             ai_fallback=ai_fallback,
             run_with=run_with,
             request_options=request_options,
