@@ -132,6 +132,9 @@ class Settings(BaseSettings):
     BROWSER_HEIGHT: int = 1080
     BROWSER_POLICY_FILE: str = "/etc/chromium/policies/managed/policies.json"
     BROWSER_LOGS_ENABLED: bool = True
+    # Browser host resolver rules for custom DNS mapping
+    # Format: "hostname:ip,hostname2:ip2" e.g. "example.com:192.168.1.100,api.example.org:10.0.0.1"
+    BROWSER_HOST_RESOLVER_RULES: str = ""
     BROWSER_MAX_PAGES_NUMBER: int = 10
     BROWSER_ADDITIONAL_ARGS: list[str] = []
 

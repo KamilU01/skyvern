@@ -127,5 +127,5 @@ async def empty_page_retry_wait(
     their callers. Defaults are reasonable for this low-level scraping utility.
     """
     wait_config = await get_or_create_wait_config(task_id, workflow_run_id, organization_id)
-    wait_seconds = get_wait_time(wait_config, "empty_page_retry_wait", default=3.0)
+    wait_seconds = get_wait_time(wait_config, "empty_page_retry_wait", default=15.0)
     await asyncio.sleep(wait_seconds)

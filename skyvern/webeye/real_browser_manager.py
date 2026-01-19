@@ -34,6 +34,7 @@ class RealBrowserManager(BrowserManager):
         extra_http_headers: dict[str, str] | None = None,
         browser_address: str | None = None,
         browser_profile_id: str | None = None,
+        host_resolver_rules: str | None = None,
     ) -> BrowserState:
         pw = await async_playwright().start()
         (
@@ -51,6 +52,7 @@ class RealBrowserManager(BrowserManager):
             extra_http_headers=extra_http_headers,
             browser_address=browser_address,
             browser_profile_id=browser_profile_id,
+            host_resolver_rules=host_resolver_rules,
         )
         return RealBrowserState(
             pw=pw,
@@ -117,6 +119,7 @@ class RealBrowserManager(BrowserManager):
                 organization_id=task.organization_id,
                 extra_http_headers=task.extra_http_headers,
                 browser_address=task.browser_address,
+                host_resolver_rules=task.host_resolver_rules,
             )
 
             if browser_session_id:
@@ -197,6 +200,7 @@ class RealBrowserManager(BrowserManager):
                 extra_http_headers=workflow_run.extra_http_headers,
                 browser_address=workflow_run.browser_address,
                 browser_profile_id=browser_profile_id,
+                host_resolver_rules=workflow_run.host_resolver_rules,
             )
 
             if browser_session_id:
