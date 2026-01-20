@@ -105,3 +105,45 @@ class TestLocalStorageBuildURIs:
             uri
             == f"file://{local_storage.artifact_path}/{settings.ENV}/{TEST_ORGANIZATION_ID}/ai_suggestions/{TEST_AI_SUGGESTION_ID}/2025-06-09T12:00:00_artifact123_screenshot_llm.png"
         )
+
+
+class TestLocalStorageDownloadedFiles:
+    """Tests for get_downloaded_files returning HTTP URLs."""
+
+    @pytest.mark.asyncio
+    async def test_get_downloaded_files_returns_http_urls(self, local_storage: LocalStorage, tmp_path) -> None:
+        """Verify that get_downloaded_files returns HTTP URLs instead of file:// URIs."""
+        import os
+        from skyvern.forge.sdk.api.files import get_download_dir
+
+        run_id = "test_run_http_urls"
+        download_dir = get_download_dir(run_id=run_id)
+        os.makedirs(download_dir, exist_ok=True)
+        test_file_path = os.path.join(download_dir, "test_document.pdf")
+
+        try:
+            # Create a test file
+            with open(test_file_path, "wb") as f:
+                f.write(b"test content for http url verification")
+
+            files = await local_storage.get_downloaded_files(TEST_ORGANIZATION_ID, run_id)
+
+            assert len(files) == 1
+            assert files[0].filename == "test_document.pdf"
+            # Verify HTTP URL format - should NOT start with file://
+            assert not files[0].url.startswith("file://")
+            # Verify it's a proper HTTP URL with the expected endpoint
+            assert files[0].url.startswith(settings.SKYVERN_BASE_URL)
+            assert f"/v1/public/runs/{run_id}/files/test_document.pdf" in files[0].url
+            # Verify checksum is present
+            assert files[0].checksum is not None
+        finally:
+            # Cleanup
+            if os.path.exists(test_file_path):
+                os.remove(test_file_path)
+            if os.path.exists(download_dir):
+                try:
+                    os.rmdir(download_dir)
+                except OSError:
+                    pass  # Directory might not be empty if other tests created files
+

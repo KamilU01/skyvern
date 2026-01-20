@@ -17,7 +17,7 @@ from fastapi import (
     UploadFile,
 )
 from fastapi import status as http_status
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import FileResponse, ORJSONResponse
 from pydantic import ValidationError
 
 from skyvern import analytics
@@ -33,6 +33,7 @@ from skyvern.forge.prompts import prompt_engine
 from skyvern.forge.sdk.api.llm.exceptions import LLMProviderError
 from skyvern.forge.sdk.artifact.models import Artifact, ArtifactType
 from skyvern.forge.sdk.core import skyvern_context
+from skyvern.forge.sdk.api.files import get_download_dir
 from skyvern.forge.sdk.core.curl_converter import curl_to_http_request_block_params
 from skyvern.forge.sdk.core.permissions.permission_checker_factory import PermissionCheckerFactory
 from skyvern.forge.sdk.core.security import generate_skyvern_signature
@@ -1336,6 +1337,88 @@ async def get_run_artifacts(
             artifact.signed_url = signed_urls[i]
 
     return ORJSONResponse([artifact.model_dump() for artifact in artifacts_list])
+
+@base_router.get(
+    "/runs/{run_id}/files/{filename}",
+    tags=["Files"],
+    summary="Download a file for a run",
+    description="Download a file generated during a run",
+    openapi_extra={
+        "x-fern-sdk-method-name": "download_run_file",
+    },
+)
+@base_router.get("/runs/{run_id}/files/{filename}/", include_in_schema=False)
+async def download_run_file(
+    run_id: str,
+    filename: str,
+    current_org: Organization = Depends(org_auth_service.get_current_org),
+) -> FileResponse:
+    import os
+
+    try:
+        download_dir = get_download_dir(run_id=run_id)
+        file_path = os.path.join(download_dir, filename)
+
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="File not found")
+
+        if not os.path.isfile(file_path):
+            raise HTTPException(status_code=400, detail="Path is not a file")
+
+        # Prevent directory traversal
+        real_path = os.path.realpath(file_path)
+        real_download_dir = os.path.realpath(download_dir)
+        if not real_path.startswith(real_download_dir):
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        return FileResponse(file_path, filename=filename)
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        LOG.error("Failed to download file", run_id=run_id, filename=filename, error=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@base_router.get(
+    "/public/runs/{run_id}/files/{filename}",
+    tags=["Files"],
+    summary="Download a file for a run (public, no auth required)",
+    description="Download a file generated during a run. This endpoint is public and does not require authentication.",
+    openapi_extra={
+        "x-fern-sdk-method-name": "download_run_file_public",
+    },
+)
+@base_router.get("/public/runs/{run_id}/files/{filename}/", include_in_schema=False)
+async def download_run_file_public(
+    run_id: str,
+    filename: str,
+) -> FileResponse:
+    """Public endpoint for downloading files without authentication."""
+    import os
+
+    try:
+        download_dir = get_download_dir(run_id=run_id)
+        file_path = os.path.join(download_dir, filename)
+
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="File not found")
+
+        if not os.path.isfile(file_path):
+            raise HTTPException(status_code=400, detail="Path is not a file")
+
+        # Prevent directory traversal
+        real_path = os.path.realpath(file_path)
+        real_download_dir = os.path.realpath(download_dir)
+        if not real_path.startswith(real_download_dir):
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        return FileResponse(file_path, filename=filename)
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        LOG.error("Failed to download file (public)", run_id=run_id, filename=filename, error=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 
 
 @base_router.post(

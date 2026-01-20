@@ -312,9 +312,13 @@ class LocalStorage(BaseStorage):
             if os.path.isfile(path):
                 # Calculate checksum for the file
                 checksum = calculate_sha256_for_file(path)
-                file_info = FileInfo(url=f"file://{path}", checksum=checksum, filename=file_or_folder)
+                # Build HTTP URL using the public file serving endpoint (no auth required)
+                # This allows external clients to access the file via HTTP without API key
+                http_url = f"{settings.SKYVERN_BASE_URL}/v1/public/runs/{run_id}/files/{file_or_folder}"
+                file_info = FileInfo(url=http_url, checksum=checksum, filename=file_or_folder)
                 file_infos.append(file_info)
         return file_infos
+
 
     @staticmethod
     def _create_directories_if_not_exists(path_including_file_name: Path) -> None:
