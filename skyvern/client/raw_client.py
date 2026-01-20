@@ -2667,6 +2667,7 @@ class AsyncRawSkyvern:
         include_action_history_in_verification: typing.Optional[bool] = OMIT,
         max_screenshot_scrolls: typing.Optional[int] = OMIT,
         browser_address: typing.Optional[str] = OMIT,
+        host_resolver_rules: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[TaskRunResponse]:
         """
@@ -2798,6 +2799,7 @@ class AsyncRawSkyvern:
                 "include_action_history_in_verification": include_action_history_in_verification,
                 "max_screenshot_scrolls": max_screenshot_scrolls,
                 "browser_address": browser_address,
+                "host_resolver_rules": host_resolver_rules,
             },
             headers={
                 "content-type": "application/json",
