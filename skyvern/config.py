@@ -418,6 +418,12 @@ class Settings(BaseSettings):
     Otherwise we'll consider the persistent browser session to be expired.
     """
 
+    # Recording cleanup settings
+    RECORDING_CLEANUP_ENABLED: bool = True
+    RECORDING_CLEANUP_DISK_THRESHOLD_PERCENT: float = 5.0
+    RECORDING_CLEANUP_RETENTION_DAYS: int = 14
+    HEALTHCHECK_REQUIRED_FILE: str = "/app/.streamlit/secrets.toml"
+
     ENCRYPTOR_AES_SECRET_KEY: str = "fillmein"
     ENCRYPTOR_AES_SALT: str | None = None
     ENCRYPTOR_AES_IV: str | None = None
