@@ -128,10 +128,11 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "test", "-f", "/app/.streamlit/secrets.toml"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "python", "scripts/healthcheck.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
   skyvern-ui:
     image: public.ecr.aws/skyvern/skyvern-ui:latest
     restart: on-failure
