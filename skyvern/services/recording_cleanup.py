@@ -69,28 +69,27 @@ def check_disk_space(path: str) -> DiskSpaceInfo:
     return info
 
 
-def _collect_all_webm_files(directory: str) -> list[tuple[Path, float, int]]:
-    """Scan directory and return list of (path, mtime, size) for all .webm files, sorted oldest first."""
+def _collect_all_files(directory: str) -> list[tuple[Path, float, int]]:
+    """Scan directory and return list of (path, mtime, size) for all files, sorted oldest first."""
     files: list[tuple[Path, float, int]] = []
     if not os.path.exists(directory):
         return files
 
     for root, _dirs, filenames in os.walk(directory):
         for filename in filenames:
-            if filename.endswith(".webm"):
-                filepath = Path(root) / filename
-                try:
-                    stat = filepath.stat()
-                    files.append((filepath, stat.st_mtime, stat.st_size))
-                except OSError:
-                    continue
+            filepath = Path(root) / filename
+            try:
+                stat = filepath.stat()
+                files.append((filepath, stat.st_mtime, stat.st_size))
+            except OSError:
+                continue
 
     files.sort(key=lambda x: x[1])  # sort by mtime, oldest first
     return files
 
 
-def cleanup_recordings(directory: str, max_age_seconds: float) -> CleanupResult:
-    """Remove .webm files older than max_age_seconds and clean up empty directories."""
+def cleanup_old_files(directory: str, max_age_seconds: float) -> CleanupResult:
+    """Remove all files older than max_age_seconds and clean up empty directories."""
     result = CleanupResult()
     if not os.path.exists(directory):
         return result
@@ -99,8 +98,6 @@ def cleanup_recordings(directory: str, max_age_seconds: float) -> CleanupResult:
 
     for root, dirs, filenames in os.walk(directory, topdown=False):
         for filename in filenames:
-            if not filename.endswith(".webm"):
-                continue
             filepath = Path(root) / filename
             try:
                 st = filepath.stat()
@@ -126,11 +123,11 @@ def cleanup_recordings(directory: str, max_age_seconds: float) -> CleanupResult:
 
 
 def _escalation_cleanup(directory: str, threshold_percent: float) -> CleanupResult:
-    """Remove .webm files from oldest until free space exceeds threshold or no files remain."""
+    """Remove files from oldest until free space exceeds threshold or no files remain."""
     result = CleanupResult()
     result.escalation_used = True
 
-    files = _collect_all_webm_files(directory)
+    files = _collect_all_files(directory)
     if not files:
         return result
 
@@ -191,7 +188,7 @@ def check_required_file() -> bool:
 def _run_cleanup_for_path(directory: str, threshold_percent: float, retention_days: int) -> CleanupResult:
     """Run phased cleanup for a single directory. Phase 1: age-based, Phase 2: escalation if needed."""
     max_age_seconds = retention_days * 86400
-    result = cleanup_recordings(directory, max_age_seconds)
+    result = cleanup_old_files(directory, max_age_seconds)
 
     disk = check_disk_space(directory)
     if disk.exists and disk.free_percent < threshold_percent:
