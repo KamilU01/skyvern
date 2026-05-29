@@ -40,6 +40,11 @@ class LLMConfig(LLMConfigBase):
     max_tokens: int | None = SettingsManager.get_settings().LLM_CONFIG_MAX_TOKENS
     max_completion_tokens: int | None = None
     temperature: float | None = SettingsManager.get_settings().LLM_CONFIG_TEMPERATURE
+    top_p: float | None = SettingsManager.get_settings().LLM_CONFIG_TOP_P
+    top_k: int | None = SettingsManager.get_settings().LLM_CONFIG_TOP_K
+    min_p: float | None = SettingsManager.get_settings().LLM_CONFIG_MIN_P
+    presence_penalty: float | None = SettingsManager.get_settings().LLM_CONFIG_PRESENCE_PENALTY
+    repetition_penalty: float | None = SettingsManager.get_settings().LLM_CONFIG_REPETITION_PENALTY
     reasoning_effort: str | None = None
 
 
@@ -90,3 +95,8 @@ class LLMRouterConfig(LLMConfigBase):
     max_completion_tokens: int | None = None
     reasoning_effort: str | None = None
     temperature: float | None = SettingsManager.get_settings().LLM_CONFIG_TEMPERATURE
+    top_p: float | None = SettingsManager.get_settings().LLM_CONFIG_TOP_P
+    top_k: int | None = SettingsManager.get_settings().LLM_CONFIG_TOP_K
+    min_p: float | None = SettingsManager.get_settings().LLM_CONFIG_MIN_P
+    presence_penalty: float | None = SettingsManager.get_settings().LLM_CONFIG_PRESENCE_PENALTY
+    repetition_penalty: float | None = SettingsManager.get_settings().LLM_CONFIG_REPETITION_PENALTY

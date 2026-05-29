@@ -172,6 +172,11 @@ class Settings(BaseSettings):
     LLM_CONFIG_TIMEOUT: int = 300
     LLM_CONFIG_MAX_TOKENS: int = 4096
     LLM_CONFIG_TEMPERATURE: float = 0
+    LLM_CONFIG_TOP_P: float | None = None
+    LLM_CONFIG_TOP_K: int | None = None
+    LLM_CONFIG_MIN_P: float | None = None
+    LLM_CONFIG_PRESENCE_PENALTY: float | None = None
+    LLM_CONFIG_REPETITION_PENALTY: float | None = None
     LLM_CONFIG_SUPPORT_VISION: bool = True  # Whether the model supports vision
     LLM_CONFIG_ADD_ASSISTANT_PREFIX: bool = False  # Whether to add assistant prefix
     # LLM PROVIDER SPECIFIC
