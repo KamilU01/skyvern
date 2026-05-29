@@ -84,6 +84,7 @@ class RawSkyvern:
         include_action_history_in_verification: typing.Optional[bool] = OMIT,
         max_screenshot_scrolls: typing.Optional[int] = OMIT,
         browser_address: typing.Optional[str] = OMIT,
+        host_resolver_rules: typing.Optional[str] = OMIT,
         run_with: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[TaskRunResponse]:
@@ -190,6 +191,9 @@ class RawSkyvern:
         browser_address : typing.Optional[str]
             The CDP address for the task.
 
+        host_resolver_rules : typing.Optional[str]
+            Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.
+
         run_with : typing.Optional[str]
             Whether to run the task with agent or code. Null means use the default.
 
@@ -227,6 +231,7 @@ class RawSkyvern:
                 "include_action_history_in_verification": include_action_history_in_verification,
                 "max_screenshot_scrolls": max_screenshot_scrolls,
                 "browser_address": browser_address,
+                "host_resolver_rules": host_resolver_rules,
                 "run_with": run_with,
             },
             headers={
@@ -291,6 +296,7 @@ class RawSkyvern:
         max_screenshot_scrolls: typing.Optional[int] = OMIT,
         extra_http_headers: typing.Optional[typing.Dict[str, typing.Optional[str]]] = OMIT,
         browser_address: typing.Optional[str] = OMIT,
+        host_resolver_rules: typing.Optional[str] = OMIT,
         ai_fallback: typing.Optional[bool] = OMIT,
         run_with: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -375,6 +381,9 @@ class RawSkyvern:
         browser_address : typing.Optional[str]
             The CDP address for the workflow run.
 
+        host_resolver_rules : typing.Optional[str]
+            Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.
+
         ai_fallback : typing.Optional[bool]
             Whether to fallback to AI if the workflow run fails.
 
@@ -410,6 +419,7 @@ class RawSkyvern:
                 "max_screenshot_scrolls": max_screenshot_scrolls,
                 "extra_http_headers": extra_http_headers,
                 "browser_address": browser_address,
+                "host_resolver_rules": host_resolver_rules,
                 "ai_fallback": ai_fallback,
                 "run_with": run_with,
             },
@@ -2857,6 +2867,7 @@ class RawSkyvern:
         browser_session_id: typing.Optional[str] = OMIT,
         browser_profile_id: typing.Optional[str] = OMIT,
         browser_address: typing.Optional[str] = OMIT,
+        host_resolver_rules: typing.Optional[str] = OMIT,
         extra_http_headers: typing.Optional[typing.Dict[str, typing.Optional[str]]] = OMIT,
         max_screenshot_scrolling_times: typing.Optional[int] = OMIT,
         prompt: typing.Optional[str] = OMIT,
@@ -2902,6 +2913,9 @@ class RawSkyvern:
 
         browser_address : typing.Optional[str]
             The CDP address for the task.
+
+        host_resolver_rules : typing.Optional[str]
+            Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.
 
         extra_http_headers : typing.Optional[typing.Dict[str, typing.Optional[str]]]
             Additional HTTP headers to include in requests
@@ -2959,6 +2973,7 @@ class RawSkyvern:
                 "browser_session_id": browser_session_id,
                 "browser_profile_id": browser_profile_id,
                 "browser_address": browser_address,
+                "host_resolver_rules": host_resolver_rules,
                 "extra_http_headers": extra_http_headers,
                 "max_screenshot_scrolling_times": max_screenshot_scrolling_times,
                 "credential_type": credential_type,
@@ -3017,6 +3032,7 @@ class RawSkyvern:
         browser_session_id: typing.Optional[str] = OMIT,
         browser_profile_id: typing.Optional[str] = OMIT,
         browser_address: typing.Optional[str] = OMIT,
+        host_resolver_rules: typing.Optional[str] = OMIT,
         extra_http_headers: typing.Optional[typing.Dict[str, typing.Optional[str]]] = OMIT,
         max_screenshot_scrolling_times: typing.Optional[int] = OMIT,
         download_suffix: typing.Optional[str] = OMIT,
@@ -3056,6 +3072,9 @@ class RawSkyvern:
         browser_address : typing.Optional[str]
             The CDP address for the task.
 
+        host_resolver_rules : typing.Optional[str]
+            Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.
+
         extra_http_headers : typing.Optional[typing.Dict[str, typing.Optional[str]]]
             Additional HTTP headers to include in requests
 
@@ -3091,6 +3110,7 @@ class RawSkyvern:
                 "browser_session_id": browser_session_id,
                 "browser_profile_id": browser_profile_id,
                 "browser_address": browser_address,
+                "host_resolver_rules": host_resolver_rules,
                 "extra_http_headers": extra_http_headers,
                 "max_screenshot_scrolling_times": max_screenshot_scrolling_times,
                 "navigation_goal": navigation_goal,
@@ -3488,6 +3508,7 @@ class AsyncRawSkyvern:
         include_action_history_in_verification: typing.Optional[bool] = OMIT,
         max_screenshot_scrolls: typing.Optional[int] = OMIT,
         browser_address: typing.Optional[str] = OMIT,
+        host_resolver_rules: typing.Optional[str] = OMIT,
         run_with: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[TaskRunResponse]:
@@ -3594,6 +3615,9 @@ class AsyncRawSkyvern:
         browser_address : typing.Optional[str]
             The CDP address for the task.
 
+        host_resolver_rules : typing.Optional[str]
+            Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.
+
         run_with : typing.Optional[str]
             Whether to run the task with agent or code. Null means use the default.
 
@@ -3631,6 +3655,7 @@ class AsyncRawSkyvern:
                 "include_action_history_in_verification": include_action_history_in_verification,
                 "max_screenshot_scrolls": max_screenshot_scrolls,
                 "browser_address": browser_address,
+                "host_resolver_rules": host_resolver_rules,
                 "run_with": run_with,
             },
             headers={
@@ -3695,6 +3720,7 @@ class AsyncRawSkyvern:
         max_screenshot_scrolls: typing.Optional[int] = OMIT,
         extra_http_headers: typing.Optional[typing.Dict[str, typing.Optional[str]]] = OMIT,
         browser_address: typing.Optional[str] = OMIT,
+        host_resolver_rules: typing.Optional[str] = OMIT,
         ai_fallback: typing.Optional[bool] = OMIT,
         run_with: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -3779,6 +3805,9 @@ class AsyncRawSkyvern:
         browser_address : typing.Optional[str]
             The CDP address for the workflow run.
 
+        host_resolver_rules : typing.Optional[str]
+            Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.
+
         ai_fallback : typing.Optional[bool]
             Whether to fallback to AI if the workflow run fails.
 
@@ -3814,6 +3843,7 @@ class AsyncRawSkyvern:
                 "max_screenshot_scrolls": max_screenshot_scrolls,
                 "extra_http_headers": extra_http_headers,
                 "browser_address": browser_address,
+                "host_resolver_rules": host_resolver_rules,
                 "ai_fallback": ai_fallback,
                 "run_with": run_with,
             },
@@ -6261,6 +6291,7 @@ class AsyncRawSkyvern:
         browser_session_id: typing.Optional[str] = OMIT,
         browser_profile_id: typing.Optional[str] = OMIT,
         browser_address: typing.Optional[str] = OMIT,
+        host_resolver_rules: typing.Optional[str] = OMIT,
         extra_http_headers: typing.Optional[typing.Dict[str, typing.Optional[str]]] = OMIT,
         max_screenshot_scrolling_times: typing.Optional[int] = OMIT,
         prompt: typing.Optional[str] = OMIT,
@@ -6306,6 +6337,9 @@ class AsyncRawSkyvern:
 
         browser_address : typing.Optional[str]
             The CDP address for the task.
+
+        host_resolver_rules : typing.Optional[str]
+            Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.
 
         extra_http_headers : typing.Optional[typing.Dict[str, typing.Optional[str]]]
             Additional HTTP headers to include in requests
@@ -6363,6 +6397,7 @@ class AsyncRawSkyvern:
                 "browser_session_id": browser_session_id,
                 "browser_profile_id": browser_profile_id,
                 "browser_address": browser_address,
+                "host_resolver_rules": host_resolver_rules,
                 "extra_http_headers": extra_http_headers,
                 "max_screenshot_scrolling_times": max_screenshot_scrolling_times,
                 "credential_type": credential_type,
@@ -6421,6 +6456,7 @@ class AsyncRawSkyvern:
         browser_session_id: typing.Optional[str] = OMIT,
         browser_profile_id: typing.Optional[str] = OMIT,
         browser_address: typing.Optional[str] = OMIT,
+        host_resolver_rules: typing.Optional[str] = OMIT,
         extra_http_headers: typing.Optional[typing.Dict[str, typing.Optional[str]]] = OMIT,
         max_screenshot_scrolling_times: typing.Optional[int] = OMIT,
         download_suffix: typing.Optional[str] = OMIT,
@@ -6460,6 +6496,9 @@ class AsyncRawSkyvern:
         browser_address : typing.Optional[str]
             The CDP address for the task.
 
+        host_resolver_rules : typing.Optional[str]
+            Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.
+
         extra_http_headers : typing.Optional[typing.Dict[str, typing.Optional[str]]]
             Additional HTTP headers to include in requests
 
@@ -6495,6 +6534,7 @@ class AsyncRawSkyvern:
                 "browser_session_id": browser_session_id,
                 "browser_profile_id": browser_profile_id,
                 "browser_address": browser_address,
+                "host_resolver_rules": host_resolver_rules,
                 "extra_http_headers": extra_http_headers,
                 "max_screenshot_scrolling_times": max_screenshot_scrolling_times,
                 "navigation_goal": navigation_goal,

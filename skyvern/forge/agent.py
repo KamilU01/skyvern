@@ -400,6 +400,7 @@ class ForgeAgent:
             max_screenshot_scrolling_times=workflow_run.max_screenshot_scrolls,
             extra_http_headers=workflow_run.extra_http_headers,
             browser_address=workflow_run.browser_address,
+            host_resolver_rules=workflow_run.host_resolver_rules,
             browser_session_id=workflow_run.browser_session_id,
             download_timeout=task_block.download_timeout,
             include_extracted_text=task_block.include_extracted_text,
@@ -472,6 +473,7 @@ class ForgeAgent:
             extra_http_headers=task_request.extra_http_headers,
             browser_session_id=task_request.browser_session_id,
             browser_address=task_request.browser_address,
+            host_resolver_rules=task_request.host_resolver_rules,
             include_extracted_text=task_request.include_extracted_text,
         )
         LOG.info(

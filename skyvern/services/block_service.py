@@ -59,6 +59,7 @@ async def ensure_workflow_run(
         browser_profile_id=block_run_request.browser_profile_id,
         max_screenshot_scrolls=block_run_request.max_screenshot_scrolls,
         extra_http_headers=block_run_request.extra_http_headers,
+        host_resolver_rules=block_run_request.host_resolver_rules,
     )
 
     workflow_run = await workflow_service.prepare_workflow(

@@ -28,6 +28,14 @@ class BaseRunBlockRequest(BaseModel):
         description="The CDP address for the task.",
         examples=["http://127.0.0.1:9222", "ws://127.0.0.1:9222/devtools/browser/1234567890"],
     )
+    host_resolver_rules: str | None = Field(
+        default=None,
+        description=(
+            "Custom host-to-IP mappings for DNS resolution. "
+            "Format: 'hostname:ip,hostname2:ip2'."
+        ),
+        examples=["example.com:192.168.1.100", "app.local:10.0.0.5,api.local:10.0.0.6"],
+    )
     extra_http_headers: dict[str, str] | None = Field(
         default=None, description="Additional HTTP headers to include in requests"
     )

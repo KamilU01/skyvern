@@ -63,6 +63,8 @@ export interface WorkflowRunRequest {
     extra_http_headers?: Record<string, string | undefined>;
     /** The CDP address for the workflow run. */
     browser_address?: string;
+    /** Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'. */
+    host_resolver_rules?: string;
     /** Whether to fallback to AI if the workflow run fails. */
     ai_fallback?: boolean;
     /** Whether to run the workflow with agent or code. Null inherits from the workflow setting. */

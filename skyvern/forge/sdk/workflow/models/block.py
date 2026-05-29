@@ -414,6 +414,7 @@ class Block(BaseModel, abc.ABC):
                     organization_id=workflow_run.organization_id,
                     extra_http_headers=workflow_run.extra_http_headers,
                     browser_address=workflow_run.browser_address,
+                    host_resolver_rules=workflow_run.host_resolver_rules,
                     browser_profile_id=workflow_run.browser_profile_id,
                 )
             except Exception:
@@ -7949,6 +7950,8 @@ class WorkflowTriggerBlock(Block):
             return await _fail(f"Organization {organization_id} not found")
 
         # 4. Resolve browser session
+        parent_workflow_run = await app.DATABASE.workflow_runs.get_workflow_run(workflow_run_id)
+        parent_host_resolver_rules = parent_workflow_run.host_resolver_rules if parent_workflow_run else None
         # Browser session priority:
         # 1. Explicit browser_session_id configured on the block
         # 2. use_parent_browser_session → inherit parent's session (persistent
@@ -7969,7 +7972,6 @@ class WorkflowTriggerBlock(Block):
         elif self.wait_for_completion:
             # Sync mode: child runs inline in the same process, so it needs
             # its own persistent session to avoid sharing the parent's browser.
-            parent_workflow_run = await app.DATABASE.workflow_runs.get_workflow_run(workflow_run_id)
             proxy_location = parent_workflow_run.proxy_location if parent_workflow_run else None
             try:
                 child_browser_session = await app.PERSISTENT_SESSIONS_MANAGER.create_session(
@@ -7999,6 +8001,7 @@ class WorkflowTriggerBlock(Block):
             workflow_request = WorkflowRequestBody(
                 data=resolved_payload,
                 browser_session_id=resolved_browser_session_id,
+                host_resolver_rules=parent_host_resolver_rules,
             )
 
             # Isolate the synchronous child workflow in a placeholder scope so
@@ -8106,6 +8109,7 @@ class WorkflowTriggerBlock(Block):
             workflow_request = WorkflowRequestBody(
                 data=resolved_payload,
                 browser_session_id=resolved_browser_session_id,
+                host_resolver_rules=parent_host_resolver_rules,
             )
             try:
                 # ``run_workflow`` persists this flag to the child's

@@ -25,6 +25,8 @@ export interface LoginRequest {
     browser_profile_id?: string;
     /** The CDP address for the task. */
     browser_address?: string;
+    /** Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'. */
+    host_resolver_rules?: string;
     /** Additional HTTP headers to include in requests */
     extra_http_headers?: Record<string, string | undefined>;
     /** Maximum number of times to scroll for screenshots */

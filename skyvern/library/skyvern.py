@@ -308,6 +308,7 @@ class Skyvern(AsyncSkyvern):
         include_action_history_in_verification: bool | None = None,
         max_screenshot_scrolls: int | None = None,
         browser_address: str | None = None,
+        host_resolver_rules: str | None = None,
         request_options: RequestOptions | None = None,
     ) -> TaskRunResponse:
         task_run = await super().run_task(
@@ -330,6 +331,7 @@ class Skyvern(AsyncSkyvern):
             include_action_history_in_verification=include_action_history_in_verification,
             max_screenshot_scrolls=max_screenshot_scrolls,
             browser_address=browser_address,
+            host_resolver_rules=host_resolver_rules,
             request_options=request_options,
         )
 
@@ -359,6 +361,7 @@ class Skyvern(AsyncSkyvern):
         max_screenshot_scrolls: int | None = None,
         extra_http_headers: dict[str, str] | None = None,
         browser_address: str | None = None,
+        host_resolver_rules: str | None = None,
         ai_fallback: bool | None = None,
         run_with: str | None = None,
         wait_for_completion: bool = False,
@@ -381,6 +384,7 @@ class Skyvern(AsyncSkyvern):
             max_screenshot_scrolls=max_screenshot_scrolls,
             extra_http_headers=extra_http_headers,
             browser_address=browser_address,
+            host_resolver_rules=host_resolver_rules,
             ai_fallback=ai_fallback,
             run_with=run_with,
             request_options=request_options,
@@ -411,6 +415,7 @@ class Skyvern(AsyncSkyvern):
         totp_url: str | None = None,
         browser_session_id: str | None = None,
         browser_address: str | None = None,
+        host_resolver_rules: str | None = None,
         extra_http_headers: dict[str, str] | None = None,
         max_screenshot_scrolling_times: int | None = None,
         azure_vault_name: str | None = None,
@@ -436,6 +441,7 @@ class Skyvern(AsyncSkyvern):
             totp_url=totp_url,
             browser_session_id=browser_session_id,
             browser_address=browser_address,
+            host_resolver_rules=host_resolver_rules,
             extra_http_headers=extra_http_headers,
             max_screenshot_scrolling_times=max_screenshot_scrolling_times,
             azure_vault_name=azure_vault_name,

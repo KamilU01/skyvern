@@ -1,6 +1,7 @@
 """Tests for browser launch error classification in browser_factory.py."""
 
 from skyvern.webeye.browser_factory import (
+    BrowserContextFactory,
     _is_browser_profile_corruption_error,
     _is_display_server_error,
 )
@@ -10,6 +11,41 @@ from skyvern.webeye.cdp_connection import (
 )
 
 # -- _is_display_server_error ------------------------------------------------
+
+
+class TestHostResolverRules:
+    """Build Chromium host resolver arguments from global and per-run rules."""
+
+    def test_build_browser_args_adds_global_and_request_rules(self, monkeypatch) -> None:
+        monkeypatch.setattr(
+            "skyvern.webeye.browser_factory.settings.BROWSER_HOST_RESOLVER_RULES",
+            "example.com:192.168.1.100",
+            raising=False,
+        )
+
+        browser_args = BrowserContextFactory.build_browser_args(
+            host_resolver_rules="app.local:10.0.0.5,api.local:10.0.0.6",
+        )
+
+        assert (
+            "--host-resolver-rules=MAP example.com 192.168.1.100,"
+            "MAP app.local 10.0.0.5,MAP api.local 10.0.0.6"
+            in browser_args["args"]
+        )
+
+    def test_build_browser_args_ignores_empty_host_entries(self, monkeypatch) -> None:
+        monkeypatch.setattr(
+            "skyvern.webeye.browser_factory.settings.BROWSER_HOST_RESOLVER_RULES",
+            "  , ",
+            raising=False,
+        )
+
+        browser_args = BrowserContextFactory.build_browser_args(
+            host_resolver_rules=" ,example.com:192.168.1.100,invalid-entry",
+        )
+
+        expected_arg = "--host-resolver-rules=MAP example.com 192.168.1.100"
+        assert expected_arg in browser_args["args"]
 
 
 class TestIsDisplayServerError:

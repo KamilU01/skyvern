@@ -118,6 +118,14 @@ class TaskBase(BaseModel):
         description="The CDP address for the task.",
         examples=["http://127.0.0.1:9222", "ws://127.0.0.1:9222/devtools/browser/1234567890"],
     )
+    host_resolver_rules: str | None = Field(
+        default=None,
+        description=(
+            "Custom host-to-IP mappings for DNS resolution. "
+            "Format: 'hostname:ip,hostname2:ip2'."
+        ),
+        examples=["example.com:192.168.1.100", "app.local:10.0.0.5,api.local:10.0.0.6"],
+    )
     download_timeout: float | None = Field(
         default=None,
         description="The maximum time to wait for downloads to complete, in seconds. If not set, defaults to BROWSER_DOWNLOAD_TIMEOUT seconds.",

@@ -27,6 +27,7 @@ def make_workflow_run(
     wfr.proxy_location = None
     wfr.extra_http_headers = None
     wfr.browser_address = None
+    wfr.host_resolver_rules = None
     return wfr
 
 

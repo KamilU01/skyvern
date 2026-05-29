@@ -8495,6 +8495,22 @@
               "ws://127.0.0.1:9222/devtools/browser/1234567890"
             ]
           },
+          "host_resolver_rules": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host Resolver Rules",
+            "description": "Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.",
+            "examples": [
+              "example.com:192.168.1.100",
+              "app.local:10.0.0.5,api.local:10.0.0.6"
+            ]
+          },
           "extra_http_headers": {
             "anyOf": [
               {
@@ -13329,6 +13345,22 @@
               "ws://127.0.0.1:9222/devtools/browser/1234567890"
             ]
           },
+          "host_resolver_rules": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host Resolver Rules",
+            "description": "Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.",
+            "examples": [
+              "example.com:192.168.1.100",
+              "app.local:10.0.0.5,api.local:10.0.0.6"
+            ]
+          },
           "extra_http_headers": {
             "anyOf": [
               {
@@ -17066,6 +17098,22 @@
             "examples": [
               "http://127.0.0.1:9222",
               "ws://127.0.0.1:9222/devtools/browser/1234567890"
+            ]
+          },
+          "host_resolver_rules": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host Resolver Rules",
+            "description": "Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.",
+            "examples": [
+              "example.com:192.168.1.100",
+              "app.local:10.0.0.5,api.local:10.0.0.6"
             ]
           },
           "run_with": {
@@ -21167,6 +21215,22 @@
             ],
             "title": "Browser Address"
           },
+          "host_resolver_rules": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host Resolver Rules",
+            "description": "Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.",
+            "examples": [
+              "example.com:192.168.1.100",
+              "app.local:10.0.0.5,api.local:10.0.0.6"
+            ]
+          },
           "run_with": {
             "anyOf": [
               {
@@ -21971,6 +22035,22 @@
             "examples": [
               "http://127.0.0.1:9222",
               "ws://127.0.0.1:9222/devtools/browser/1234567890"
+            ]
+          },
+          "host_resolver_rules": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host Resolver Rules",
+            "description": "Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.",
+            "examples": [
+              "example.com:192.168.1.100",
+              "app.local:10.0.0.5,api.local:10.0.0.6"
             ]
           },
           "ai_fallback": {

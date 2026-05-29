@@ -93,6 +93,8 @@ export interface TaskRunRequest {
     max_screenshot_scrolls?: number;
     /** The CDP address for the task. */
     browser_address?: string;
+    /** Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'. */
+    host_resolver_rules?: string;
     /** Whether to run the task with agent or code. Null means use the default. */
     run_with?: string;
 }

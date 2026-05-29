@@ -190,6 +190,7 @@ class Settings(BaseSettings):
     BROWSER_CURSOR_VISUALIZATION: bool = False
     BROWSER_MAX_PAGES_NUMBER: int = 10
     BROWSER_ADDITIONAL_ARGS: list[str] = []
+    BROWSER_HOST_RESOLVER_RULES: str = ""
 
     # Add extension folders name here to load extension in your browser
     EXTENSIONS_BASE_PATH: str = "./extensions"

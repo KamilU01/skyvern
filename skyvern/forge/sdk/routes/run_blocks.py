@@ -75,6 +75,7 @@ async def _run_workflow_and_build_response(
         browser_session_id=run_block_request.browser_session_id,
         browser_profile_id=run_block_request.browser_profile_id,
         browser_address=run_block_request.browser_address,
+        host_resolver_rules=run_block_request.host_resolver_rules,
         max_screenshot_scrolls=run_block_request.max_screenshot_scrolling_times,
         extra_http_headers=run_block_request.extra_http_headers,
     )

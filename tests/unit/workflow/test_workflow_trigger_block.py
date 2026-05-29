@@ -367,6 +367,10 @@ async def test_sync_trigger_preserves_parent_feature_flag_summary(monkeypatch: p
     try:
         with patch("skyvern.forge.sdk.workflow.models.block.app") as mock_app:
             mock_app.DATABASE.organizations.get_organization = AsyncMock(return_value=organization)
+            parent_workflow_run = MagicMock()
+            parent_workflow_run.proxy_location = None
+            parent_workflow_run.host_resolver_rules = "parent.local:10.0.0.7"
+            mock_app.DATABASE.workflow_runs.get_workflow_run = AsyncMock(return_value=parent_workflow_run)
             mock_app.WORKFLOW_SERVICE.setup_workflow_run = AsyncMock(side_effect=_setup_workflow_run)
             mock_app.WORKFLOW_SERVICE.execute_workflow = AsyncMock(side_effect=_execute_workflow)
             mock_app.WORKFLOW_SERVICE.get_output_parameter_workflow_run_output_parameter_tuples = AsyncMock(
@@ -379,6 +383,8 @@ async def test_sync_trigger_preserves_parent_feature_flag_summary(monkeypatch: p
                 organization_id="org_parent",
                 browser_session_id="pbs_parent",
             )
+            setup_request = mock_app.WORKFLOW_SERVICE.setup_workflow_run.await_args.kwargs["workflow_request"]
+            assert setup_request.host_resolver_rules == "parent.local:10.0.0.7"
 
         assert skyvern_context.current() is parent_context
 

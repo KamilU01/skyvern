@@ -166,6 +166,7 @@ async def get_workflow_run_response(
             totp_identifier=workflow_run.totp_identifier,
             max_screenshot_scrolls=workflow_run.max_screenshot_scrolls,
             browser_address=workflow_run.browser_address,
+            host_resolver_rules=getattr(workflow_run, "host_resolver_rules", None),
             browser_profile_id=workflow_run.browser_profile_id,
             browser_session_id=workflow_run.browser_session_id,
         ),

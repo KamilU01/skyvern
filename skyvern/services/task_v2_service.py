@@ -260,6 +260,7 @@ async def initialize_task_v2(
     browser_session_id: str | None = None,
     extra_http_headers: dict[str, str] | None = None,
     browser_address: str | None = None,
+    host_resolver_rules: str | None = None,
     run_with: str | None = None,
     trigger_type: WorkflowRunTriggerType | None = None,
 ) -> TaskV2:
@@ -307,6 +308,7 @@ async def initialize_task_v2(
                 browser_session_id=browser_session_id,
                 extra_http_headers=extra_http_headers,
                 browser_address=browser_address,
+                host_resolver_rules=host_resolver_rules,
                 run_with=run_with,
             ),
             workflow_permanent_id=new_workflow.workflow_permanent_id,
@@ -2054,6 +2056,11 @@ async def build_task_v2_run_response(task_v2: TaskV2) -> TaskRunResponse:
             proxy_location=task_v2.proxy_location,
             data_extraction_schema=task_v2.extracted_information_schema,
             error_code_mapping=task_v2.error_code_mapping,
+            host_resolver_rules=(
+                workflow_run_resp.run_request.host_resolver_rules
+                if workflow_run_resp and workflow_run_resp.run_request
+                else None
+            ),
         ),
         errors=workflow_run_resp.errors if workflow_run_resp else None,
         step_count=workflow_run_resp.step_count if workflow_run_resp else None,

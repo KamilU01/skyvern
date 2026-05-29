@@ -258,6 +258,7 @@ async def run_task(
             max_screenshot_scrolls=run_request.max_screenshot_scrolls,
             extra_http_headers=run_request.extra_http_headers,
             browser_address=run_request.browser_address,
+            host_resolver_rules=run_request.host_resolver_rules,
         )
         task_v1_response = await task_v1_service.run_task(
             task=task_v1_request,
@@ -300,6 +301,7 @@ async def run_task(
                 error_code_mapping=task_v1_response.error_code_mapping,
                 browser_session_id=run_request.browser_session_id,
                 max_screenshot_scrolls=run_request.max_screenshot_scrolls,
+                host_resolver_rules=run_request.host_resolver_rules,
             ),
         )
     if run_request.engine == RunEngine.skyvern_v2:
@@ -326,6 +328,7 @@ async def run_task(
                 extra_http_headers=run_request.extra_http_headers,
                 browser_session_id=run_request.browser_session_id,
                 browser_address=run_request.browser_address,
+                host_resolver_rules=run_request.host_resolver_rules,
                 run_with=run_request.run_with,
             )
         except MissingBrowserAddressError as e:
@@ -377,6 +380,7 @@ async def run_task(
                 data_extraction_schema=task_v2.extracted_information_schema,
                 publish_workflow=run_request.publish_workflow,
                 max_screenshot_scrolls=run_request.max_screenshot_scrolls,
+                host_resolver_rules=run_request.host_resolver_rules,
             ),
         )
     LOG.error("Invalid agent engine", engine=run_request.engine, organization_id=current_org.organization_id)
@@ -434,6 +438,7 @@ async def run_workflow(
         max_screenshot_scrolls=workflow_run_request.max_screenshot_scrolls,
         extra_http_headers=workflow_run_request.extra_http_headers,
         browser_address=workflow_run_request.browser_address,
+        host_resolver_rules=workflow_run_request.host_resolver_rules,
         run_with=workflow_run_request.run_with,
         ai_fallback=workflow_run_request.ai_fallback,
     )
@@ -3473,6 +3478,7 @@ async def run_task_v2(
             browser_session_id=data.browser_session_id,
             extra_http_headers=data.extra_http_headers,
             browser_address=data.browser_address,
+            host_resolver_rules=data.host_resolver_rules,
             trigger_type=legacy_v2_trigger_type,
         )
     except MissingBrowserAddressError as e:

@@ -32,6 +32,7 @@ class WorkflowRun(UniversalBaseModel):
     workflow_title: typing.Optional[str] = None
     max_screenshot_scrolls: typing.Optional[int] = None
     browser_address: typing.Optional[str] = None
+    host_resolver_rules: typing.Optional[str] = None
     run_with: typing.Optional[str] = None
     script_run: typing.Optional[ScriptRunResponse] = None
     job_id: typing.Optional[str] = None

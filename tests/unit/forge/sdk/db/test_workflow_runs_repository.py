@@ -10,6 +10,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from skyvern.forge.sdk.db.repositories.workflow_runs import WorkflowRunsRepository
+from skyvern.forge.sdk.workflow.models.workflow import WorkflowRunStatus
 from skyvern.forge.sdk.workflow.models.parameter import WorkflowParameter, WorkflowParameterType
 
 
@@ -57,6 +58,44 @@ def _where_clause_sql(query: Any) -> str:
 def _assert_not_filtering_copilot_authored_workflows(where_clause: str) -> None:
     assert "workflows.created_by" not in where_clause
     assert "workflows.edited_by" not in where_clause
+
+
+@pytest.mark.asyncio
+async def test_create_workflow_run_persists_host_rules(monkeypatch: pytest.MonkeyPatch) -> None:
+    """create_workflow_run should persist and hydrate per-run host resolver rules."""
+    tracked_models: list = []
+    session = MagicMock()
+    session.add = MagicMock(side_effect=lambda model: tracked_models.append(model))
+    session.commit = AsyncMock()
+    session.refresh = AsyncMock()
+
+    captured_model: dict[str, Any] = {}
+
+    def _convert_to_workflow_run(model):
+        captured_model["model"] = model
+        return MagicMock(
+            workflow_run_id=model.workflow_run_id,
+            status=WorkflowRunStatus.created,
+            host_resolver_rules=model.host_resolver_rules,
+        )
+
+    monkeypatch.setattr(
+        "skyvern.forge.sdk.db.repositories.workflow_runs.convert_to_workflow_run",
+        _convert_to_workflow_run,
+    )
+
+    repo = WorkflowRunsRepository(session_factory=lambda: _SessionContext(session), debug_enabled=False)
+
+    workflow_run = await repo.create_workflow_run(
+        workflow_permanent_id="wpid_test",
+        workflow_id="wf_test",
+        organization_id="org_test",
+        host_resolver_rules="example.com:192.168.1.100",
+    )
+
+    assert tracked_models[0].host_resolver_rules == "example.com:192.168.1.100"
+    assert captured_model["model"].host_resolver_rules == "example.com:192.168.1.100"
+    assert workflow_run.host_resolver_rules == "example.com:192.168.1.100"
 
 
 @pytest.mark.asyncio

@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Any, List
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 from typing_extensions import deprecated
 
 from skyvern.forge.sdk.db.enums import WorkflowRunTriggerType
@@ -33,6 +33,14 @@ class WorkflowRequestBody(BaseModel):
     max_screenshot_scrolls: int | None = None
     extra_http_headers: dict[str, str] | None = None
     browser_address: str | None = None
+    host_resolver_rules: str | None = Field(
+        default=None,
+        description=(
+            "Custom host-to-IP mappings for DNS resolution. "
+            "Format: 'hostname:ip,hostname2:ip2'."
+        ),
+        examples=["example.com:192.168.1.100", "app.local:10.0.0.5,api.local:10.0.0.6"],
+    )
     run_with: str | None = None
     ai_fallback: bool | None = None
 
@@ -193,6 +201,14 @@ class WorkflowRun(BaseModel):
     workflow_title: str | None = None
     max_screenshot_scrolls: int | None = None
     browser_address: str | None = None
+    host_resolver_rules: str | None = Field(
+        default=None,
+        description=(
+            "Custom host-to-IP mappings for DNS resolution. "
+            "Format: 'hostname:ip,hostname2:ip2'."
+        ),
+        examples=["example.com:192.168.1.100", "app.local:10.0.0.5,api.local:10.0.0.6"],
+    )
     run_with: str | None = None
     script_run: ScriptRunResponse | None = None
     job_id: str | None = None
@@ -289,6 +305,7 @@ class WorkflowRunResponseBase(BaseModel):
     browser_profile_id: str | None = None
     max_screenshot_scrolls: int | None = None
     browser_address: str | None = None
+    host_resolver_rules: str | None = None
     run_with: str = "agent"
     script_run: ScriptRunResponse | None = None
     errors: list[dict[str, Any]] | None = None

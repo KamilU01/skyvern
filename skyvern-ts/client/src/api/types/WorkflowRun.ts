@@ -23,6 +23,7 @@ export interface WorkflowRun {
     workflow_title?: string;
     max_screenshot_scrolls?: number;
     browser_address?: string;
+    host_resolver_rules?: string;
     run_with?: string;
     script_run?: Skyvern.ScriptRunResponse;
     job_id?: string;

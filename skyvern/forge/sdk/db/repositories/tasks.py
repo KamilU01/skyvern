@@ -66,6 +66,7 @@ class TasksRepository(BaseRepository):
         extra_http_headers: dict[str, str] | None = None,
         browser_session_id: str | None = None,
         browser_address: str | None = None,
+        host_resolver_rules: str | None = None,
         download_timeout: float | None = None,
         include_extracted_text: bool = True,
     ) -> Task:
@@ -112,6 +113,7 @@ class TasksRepository(BaseRepository):
                 extra_http_headers=extra_http_headers,
                 browser_session_id=browser_session_id,
                 browser_address=browser_address,
+                host_resolver_rules=host_resolver_rules,
                 download_timeout=download_timeout,
                 include_extracted_text=include_extracted_text,
             )

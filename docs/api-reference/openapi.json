@@ -5230,6 +5230,13 @@
             "description": "The CDP address for the task.",
             "example": "http://127.0.0.1:9222"
           },
+          "host_resolver_rules": {
+            "type": "string",
+            "nullable": true,
+            "title": "Host Resolver Rules",
+            "description": "Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.",
+            "example": "example.com:192.168.1.100"
+          },
           "extra_http_headers": {
             "additionalProperties": {
               "type": "string"
@@ -8122,6 +8129,13 @@
             "description": "The CDP address for the task.",
             "example": "http://127.0.0.1:9222"
           },
+          "host_resolver_rules": {
+            "type": "string",
+            "nullable": true,
+            "title": "Host Resolver Rules",
+            "description": "Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.",
+            "example": "example.com:192.168.1.100"
+          },
           "extra_http_headers": {
             "additionalProperties": {
               "type": "string"
@@ -10601,6 +10615,13 @@
             "title": "Browser Address",
             "description": "The CDP address for the task.",
             "example": "http://127.0.0.1:9222"
+          },
+          "host_resolver_rules": {
+            "type": "string",
+            "nullable": true,
+            "title": "Host Resolver Rules",
+            "description": "Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.",
+            "example": "example.com:192.168.1.100"
           },
           "run_with": {
             "type": "string",
@@ -13812,6 +13833,13 @@
             "title": "Browser Address",
             "description": "The CDP address for the workflow run.",
             "example": "http://127.0.0.1:9222"
+          },
+          "host_resolver_rules": {
+            "type": "string",
+            "nullable": true,
+            "title": "Host Resolver Rules",
+            "description": "Custom host-to-IP mappings for DNS resolution. Format: 'hostname:ip,hostname2:ip2'.",
+            "example": "example.com:192.168.1.100"
           },
           "ai_fallback": {
             "type": "boolean",

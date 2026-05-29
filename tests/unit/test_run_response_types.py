@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 from pydantic import TypeAdapter
 
+from skyvern.client.types.workflow_run import WorkflowRun as ClientWorkflowRun
 from skyvern.schemas.runs import RunResponse, RunStatus, RunType, TaskRunResponse, WorkflowRunResponse
 
 
@@ -49,3 +50,7 @@ def test_run_response_discriminator_preserves_run_type_enum() -> None:
 
     assert isinstance(response, TaskRunResponse)
     assert response.run_type is RunType.task_v2
+
+
+def test_client_workflow_run_types_host_resolver_rules() -> None:
+    assert "host_resolver_rules" in ClientWorkflowRun.__annotations__

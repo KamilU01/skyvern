@@ -91,6 +91,24 @@ def parse_extra_headers(extra_http_headers: dict[str, str] | None) -> ParsedBrow
     )
 
 
+def _build_host_resolver_rules(request_rules: str | None) -> str:
+    rules: list[str] = []
+    for rule_source in (settings.BROWSER_HOST_RESOLVER_RULES, request_rules):
+        if not rule_source:
+            continue
+        for raw_rule in rule_source.split(","):
+            raw_rule = raw_rule.strip()
+            if not raw_rule or ":" not in raw_rule:
+                continue
+            host, ip_address = (
+                part.strip()
+                for part in raw_rule.split(":", 1)
+            )
+            if host and ip_address:
+                rules.append(f"MAP {host} {ip_address}")
+    return ",".join(rules)
+
+
 def set_browser_console_log(browser_context: BrowserContext, browser_artifacts: BrowserArtifacts) -> None:
     if browser_artifacts.browser_console_log_path is None:
         log_path = f"{settings.LOG_PATH}/{datetime.utcnow().strftime('%Y-%m-%d')}/{uuid.uuid4()}.log"
@@ -263,6 +281,7 @@ class BrowserContextFactory:
         proxy_location: ProxyLocation | None = None,
         cdp_port: int | None = None,
         extra_http_headers: dict[str, str] | None = None,
+        host_resolver_rules: str | None = None,
     ) -> dict[str, Any]:
         video_dir = f"{settings.VIDEO_PATH}/{datetime.utcnow().strftime('%Y-%m-%d')}"
         har_dir = (
@@ -295,6 +314,9 @@ class BrowserContextFactory:
             LOG.info("Extensions added to browser args", extensions=joined_paths)
 
         browser_args.extend(settings.BROWSER_ADDITIONAL_ARGS)
+        combined_host_rules = _build_host_resolver_rules(host_resolver_rules)
+        if combined_host_rules:
+            browser_args.append(f"--host-resolver-rules={combined_host_rules}")
         args = {
             "color_scheme": "no-preference",
             "args": browser_args,
@@ -563,7 +585,10 @@ async def _create_headless_chromium(
     )
     cdp_port: int | None = _get_cdp_port(kwargs)
     browser_args = BrowserContextFactory.build_browser_args(
-        proxy_location=proxy_location, cdp_port=cdp_port, extra_http_headers=extra_http_headers
+        proxy_location=proxy_location,
+        cdp_port=cdp_port,
+        extra_http_headers=extra_http_headers,
+        host_resolver_rules=cast(str | None, kwargs.get("host_resolver_rules")),
     )
     browser_args.update(
         {
@@ -652,7 +677,10 @@ async def _create_headful_chromium(
     )
     cdp_port: int | None = _get_cdp_port(kwargs)
     browser_args = BrowserContextFactory.build_browser_args(
-        proxy_location=proxy_location, cdp_port=cdp_port, extra_http_headers=extra_http_headers
+        proxy_location=proxy_location,
+        cdp_port=cdp_port,
+        extra_http_headers=extra_http_headers,
+        host_resolver_rules=cast(str | None, kwargs.get("host_resolver_rules")),
     )
     browser_args.update(
         {
