@@ -407,6 +407,75 @@ async def test_sync_trigger_preserves_parent_feature_flag_summary(monkeypatch: p
     }
 
 
+@pytest.mark.asyncio
+async def test_sync_trigger_fresh_child_session_uses_parent_host_resolver_rules(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    block = _make_block(use_parent_browser_session=False, wait_for_completion=True)
+    skyvern_context.set(
+        SkyvernContext(
+            organization_id="org_parent",
+            workflow_run_id="wr_parent",
+            workflow_permanent_id="wfp_parent",
+            root_workflow_run_id="wr_parent",
+            run_id="wr_parent",
+        )
+    )
+    organization = MagicMock()
+    organization.organization_id = "org_parent"
+    organization.organization_name = "Org Parent"
+
+    async def _setup_workflow_run(**_: Any) -> Any:
+        workflow_run = MagicMock()
+        workflow_run.workflow_run_id = "wr_child"
+        workflow_run.workflow_permanent_id = "wfp_child"
+        return workflow_run
+
+    async def _execute_workflow(**_: Any) -> Any:
+        workflow_run = MagicMock()
+        workflow_run.status = WorkflowRunStatus.completed
+        workflow_run.failure_reason = None
+        workflow_run.workflow_id = "wf_child"
+        return workflow_run
+
+    monkeypatch.setattr(WorkflowTriggerBlock, "get_workflow_run_context", lambda self, workflow_run_id: MagicMock())
+    monkeypatch.setattr(WorkflowTriggerBlock, "format_potential_template_parameters", lambda self, ctx: None)
+    monkeypatch.setattr(WorkflowTriggerBlock, "_check_trigger_depth", AsyncMock(return_value=0))
+    monkeypatch.setattr(WorkflowTriggerBlock, "record_output_parameter_value", AsyncMock())
+    monkeypatch.setattr(WorkflowTriggerBlock, "build_block_result", AsyncMock(return_value=MagicMock()))
+
+    try:
+        with patch("skyvern.forge.sdk.workflow.models.block.app") as mock_app:
+            mock_app.DATABASE.organizations.get_organization = AsyncMock(return_value=organization)
+            parent_workflow_run = MagicMock()
+            parent_workflow_run.proxy_location = None
+            parent_workflow_run.host_resolver_rules = "child.local:10.0.0.9"
+            mock_app.DATABASE.workflow_runs.get_workflow_run = AsyncMock(return_value=parent_workflow_run)
+            mock_app.PERSISTENT_SESSIONS_MANAGER.create_session = AsyncMock(
+                return_value=MagicMock(persistent_browser_session_id="pbs_child")
+            )
+            mock_app.PERSISTENT_SESSIONS_MANAGER.close_session = AsyncMock()
+            mock_app.WORKFLOW_SERVICE.setup_workflow_run = AsyncMock(side_effect=_setup_workflow_run)
+            mock_app.WORKFLOW_SERVICE.execute_workflow = AsyncMock(side_effect=_execute_workflow)
+            mock_app.WORKFLOW_SERVICE.get_output_parameter_workflow_run_output_parameter_tuples = AsyncMock(
+                return_value=[]
+            )
+
+            await block.execute(
+                workflow_run_id="wr_parent",
+                workflow_run_block_id="wrb_parent",
+                organization_id="org_parent",
+                browser_session_id=None,
+            )
+
+        assert (
+            mock_app.PERSISTENT_SESSIONS_MANAGER.create_session.await_args.kwargs["host_resolver_rules"]
+            == "child.local:10.0.0.9"
+        )
+    finally:
+        skyvern_context.reset()
+
+
 class TestBlockMetadata:
     """Verify basic block properties."""
 

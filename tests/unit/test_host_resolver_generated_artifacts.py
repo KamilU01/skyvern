@@ -18,6 +18,9 @@ SCHEMAS_WITH_HOST_RESOLVER_RULES = {
     "LoginRequest",
     "DownloadFilesRequest",
 }
+OPTIONAL_SCHEMAS_WITH_HOST_RESOLVER_RULES = {
+    "TaskV2Request",
+}
 SCHEMAS_WITHOUT_HOST_RESOLVER_RULES = {
     "BrowserSessionResponse",
     "RunSdkActionRequest",
@@ -61,6 +64,23 @@ def test_static_openapi_matches_live_host_resolver_rules(
         if schema_name == "WorkflowRun" and not _schema_exists(static_schema, schema_name):
             continue
         assert _schema_has_property(static_schema, schema_name, "host_resolver_rules"), static_openapi_path
+
+
+@pytest.mark.parametrize("schema_name", sorted(OPTIONAL_SCHEMAS_WITH_HOST_RESOLVER_RULES))
+def test_optional_static_openapi_schema_matches_live_host_resolver_rules(
+    live_openapi_schema: dict,
+    schema_name: str,
+) -> None:
+    live_schema_exists = _schema_exists(live_openapi_schema, schema_name)
+    if live_schema_exists:
+        assert _schema_has_property(live_openapi_schema, schema_name, "host_resolver_rules")
+
+    for static_openapi_path in STATIC_OPENAPI_PATHS:
+        static_schema = json.loads(static_openapi_path.read_text(encoding="utf-8"))
+        static_schema_exists = _schema_exists(static_schema, schema_name)
+        assert static_schema_exists is live_schema_exists, static_openapi_path
+        if static_schema_exists:
+            assert _schema_has_property(static_schema, schema_name, "host_resolver_rules"), static_openapi_path
 
 
 @pytest.mark.parametrize("schema_name", sorted(SCHEMAS_WITHOUT_HOST_RESOLVER_RULES))

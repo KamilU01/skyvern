@@ -7977,6 +7977,7 @@ class WorkflowTriggerBlock(Block):
                 child_browser_session = await app.PERSISTENT_SESSIONS_MANAGER.create_session(
                     organization_id=organization_id,
                     proxy_location=proxy_location,
+                    host_resolver_rules=parent_host_resolver_rules,
                     timeout_minutes=30,
                 )
                 resolved_browser_session_id = child_browser_session.persistent_browser_session_id

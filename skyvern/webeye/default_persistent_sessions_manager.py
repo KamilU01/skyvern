@@ -279,6 +279,7 @@ class DefaultPersistentSessionsManager(PersistentSessionsManager):
         browser_type: PersistentBrowserType | None = None,
         is_high_priority: bool = False,
         browser_profile_id: str | None = None,
+        host_resolver_rules: str | None = None,
     ) -> PersistentBrowserSession:
         """Create a new browser session for an organization and return its ID with the browser state."""
         LOG.info(
@@ -301,7 +302,13 @@ class DefaultPersistentSessionsManager(PersistentSessionsManager):
         if settings.BROWSER_STREAMING_MODE == "cdp" and runnable_id is None:
             session_id = session.persistent_browser_session_id
             task = asyncio.create_task(
-                self._launch_browser_for_session(session_id, organization_id, proxy_location, url)
+                self._launch_browser_for_session(
+                    session_id,
+                    organization_id,
+                    proxy_location,
+                    url,
+                    host_resolver_rules,
+                )
             )
             self._background_tasks.add(task)
             task.add_done_callback(self._background_tasks.discard)
@@ -314,17 +321,20 @@ class DefaultPersistentSessionsManager(PersistentSessionsManager):
         organization_id: str,
         proxy_location: ProxyLocationInput | None = None,
         url: str | None = None,
+        host_resolver_rules: str | None = None,
     ) -> None:
         try:
             browser_state = await RealBrowserManager._create_browser_state(
                 proxy_location=proxy_location,
                 url=url,
                 organization_id=organization_id,
+                host_resolver_rules=host_resolver_rules,
             )
             await browser_state.get_or_create_page(
                 url=url or "about:blank",
                 proxy_location=proxy_location,
                 organization_id=organization_id,
+                host_resolver_rules=host_resolver_rules,
             )
 
             session = await self.get_session(session_id, organization_id)

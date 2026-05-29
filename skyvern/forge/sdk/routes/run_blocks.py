@@ -116,6 +116,7 @@ async def _run_workflow_and_build_response(
             browser_session_id=run_block_request.browser_session_id,
             browser_profile_id=run_block_request.browser_profile_id,
             max_screenshot_scrolls=run_block_request.max_screenshot_scrolling_times,
+            host_resolver_rules=run_block_request.host_resolver_rules,
         ),
         app_url=f"{settings.SKYVERN_APP_URL.rstrip('/')}/runs/{workflow_run.workflow_run_id}",
         browser_session_id=run_block_request.browser_session_id,
