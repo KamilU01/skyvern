@@ -34,6 +34,10 @@ if [ -n "$DATABASE_STRING" ]; then
     fi
 fi
 
+if [ -n "$DATABASE_STRING" ]; then
+    python -m skyvern.utils.fork_migration_repair --yes --app-dir /app
+fi
+
 # Set ALLOWED_SKIP_DB_MIGRATION_VERSION env var to the DB version you want to allow (select * from alembic_version)
 # If current DB matches this version, migrations will be skipped. Use at your own risk.
 ALLOWED_SKIP_DB_MIGRATION_VERSION=${ALLOWED_SKIP_DB_MIGRATION_VERSION:-}

@@ -47,6 +47,7 @@ def migrate_db() -> None:
     from skyvern.analytics import capture_setup_error, capture_setup_event
     from skyvern.config import Settings, _ensure_sqlite_dir
     from skyvern.forge.sdk.settings_manager import SettingsManager
+    from skyvern.utils.fork_migration_repair import repair_if_needed
 
     # Reload settings so env vars set by setup_postgresql() are picked up.
     refreshed = Settings()
@@ -56,6 +57,12 @@ def migrate_db() -> None:
 
     capture_setup_event("migration-start")
     try:
+        repair_if_needed(
+            refreshed.DATABASE_STRING,
+            app_dir=str(REPO_ROOT_DIR),
+            apply=True,
+            reporter=print,
+        )
         alembic_cfg = Config()
         alembic_cfg.set_main_option("script_location", str(migrations_path))
         command.upgrade(alembic_cfg, "head")

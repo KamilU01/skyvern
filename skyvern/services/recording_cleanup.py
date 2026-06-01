@@ -147,10 +147,10 @@ def _escalation_cleanup(directory: str, threshold_percent: float) -> CleanupResu
             result.errors.append(f"{filepath}: {e}")
             continue
 
+        disk = check_disk_space(directory)
+        if disk.exists and disk.free_percent >= threshold_percent:
+            break
         if files_since_check >= _ESCALATION_BATCH_SIZE or bytes_since_check >= _ESCALATION_BYTES_BETWEEN_CHECKS:
-            disk = check_disk_space(directory)
-            if disk.exists and disk.free_percent >= threshold_percent:
-                break
             files_since_check = 0
             bytes_since_check = 0
 
