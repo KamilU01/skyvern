@@ -134,6 +134,29 @@ async def test_non_pbs_workflow_run_inherits_parent_browser() -> None:
     assert manager.pages["wfr_parent"] is parent_state
 
 
+@pytest.mark.asyncio
+async def test_cleanup_for_workflow_run_does_not_treat_own_entry_as_shared() -> None:
+    """A workflow run's own cache entry must not prevent browser close/final video flush."""
+    manager = RealBrowserManager()
+    browser_state = MagicMock()
+    browser_state.browser_context = None
+    browser_state.browser_artifacts.traces_dir = None
+    browser_state.close = AsyncMock()
+    manager.pages["wfr_1"] = browser_state
+
+    with patch(
+        "skyvern.forge.sdk.routes.streaming.registries.stream_ref_active",
+        return_value=False,
+    ):
+        await manager.cleanup_for_workflow_run(
+            workflow_run_id="wfr_1",
+            task_ids=[],
+            close_browser_on_completion=True,
+        )
+
+    browser_state.close.assert_awaited_once_with(close_browser_on_completion=True)
+
+
 def _make_browser_state_with_video(video_path: str) -> MagicMock:
     video_artifact = MagicMock()
     video_artifact.video_path = video_path

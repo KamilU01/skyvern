@@ -299,7 +299,7 @@ class RealBrowserManager(BrowserManager):
 
         for i, video_artifact in enumerate(browser_state.browser_artifacts.video_artifacts):
             path = video_artifact.video_path
-            if path and os.path.exists(path=path):
+            if path and os.path.exists(path):
                 if finalize:
                     # Remux via ffmpeg so the WebM container has a valid Duration + Cues,
                     # even when browser_context.close() was killed mid-finalization.
@@ -329,7 +329,7 @@ class RealBrowserManager(BrowserManager):
     ) -> bytes:
         if browser_state:
             path = browser_state.browser_artifacts.har_path
-            if path and os.path.exists(path=path):
+            if path and os.path.exists(path):
                 with open(path, "rb") as f:
                     return f.read()
         LOG.warning(
@@ -425,7 +425,9 @@ class RealBrowserManager(BrowserManager):
             # If another workflow run still references this browser state (e.g. a
             # parent whose in-memory browser was shared via use_parent_browser_session),
             # skip closing the browser so the parent can continue using it.
-            shared = any(bs is browser_state_to_close for bs in self.pages.values())
+            shared = any(
+                page_id != workflow_run_id and bs is browser_state_to_close for page_id, bs in self.pages.items()
+            )
             effective_close = close_browser_on_completion and not shared
             if shared:
                 LOG.info(
