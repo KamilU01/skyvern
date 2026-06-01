@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import time
 import unicodedata
 from enum import Enum
@@ -21,7 +22,7 @@ from fastapi import (
     UploadFile,
 )
 from fastapi import status as http_status
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import FileResponse, ORJSONResponse
 from opentelemetry import trace
 from pydantic import TypeAdapter, ValidationError
 
@@ -36,6 +37,7 @@ from skyvern.exceptions import (
 )
 from skyvern.forge import app
 from skyvern.forge.prompts import prompt_engine
+from skyvern.forge.sdk.api.files import get_download_dir
 from skyvern.forge.sdk.api.llm.exceptions import LLMProviderError
 from skyvern.forge.sdk.artifact.models import Artifact, ArtifactType
 from skyvern.forge.sdk.artifact.signing import (
@@ -565,6 +567,80 @@ async def cancel_run(
     analytics.capture("skyvern-oss-agent-cancel-run")
 
     await run_service.cancel_run(run_id, organization_id=current_org.organization_id, api_key=x_api_key)
+
+
+def _resolve_run_file_path(run_id: str, filename: str) -> str:
+    """Resolve a downloaded run file, rejecting directory traversal. Raises HTTPException on error."""
+    download_dir = get_download_dir(run_id=run_id)
+    real_download_dir = os.path.realpath(download_dir)
+    real_path = os.path.realpath(os.path.join(download_dir, filename))
+    # The resolved path must live inside the run's download dir. commonpath avoids the
+    # prefix-string pitfall of startswith (e.g. "/downloads-evil" vs "/downloads").
+    try:
+        within_dir = os.path.commonpath([real_path, real_download_dir]) == real_download_dir
+    except ValueError:
+        within_dir = False
+    if not within_dir:
+        raise HTTPException(status_code=403, detail="Access denied")
+    if not os.path.exists(real_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    if not os.path.isfile(real_path):
+        raise HTTPException(status_code=400, detail="Path is not a file")
+    return real_path
+
+
+@base_router.get(
+    "/runs/{run_id}/files/{filename}",
+    tags=["Files"],
+    summary="Download a file for a run",
+    description="Download a file generated during a run.",
+    openapi_extra={
+        "x-fern-sdk-method-name": "download_run_file",
+    },
+)
+@base_router.get("/runs/{run_id}/files/{filename}/", include_in_schema=False)
+async def download_run_file(
+    run_id: str = Path(..., description="The id of the run that produced the file."),
+    filename: str = Path(..., description="The name of the file to download."),
+    current_org: Organization = Depends(org_auth_service.get_current_org),
+) -> FileResponse:
+    try:
+        file_path = _resolve_run_file_path(run_id, filename)
+        return FileResponse(file_path, filename=filename)
+    except HTTPException:
+        raise
+    except Exception:
+        LOG.error("Failed to download run file", run_id=run_id, filename=filename, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@base_router.get(
+    "/public/runs/{run_id}/files/{filename}",
+    tags=["Files"],
+    summary="Download a file for a run (public, no auth required)",
+    description=(
+        "Download a file generated during a run without authentication. "
+        "Returns 404 unless ENABLE_PUBLIC_RUN_FILE_ENDPOINT is enabled."
+    ),
+    openapi_extra={
+        "x-fern-sdk-method-name": "download_run_file_public",
+    },
+)
+@base_router.get("/public/runs/{run_id}/files/{filename}/", include_in_schema=False)
+async def download_run_file_public(
+    run_id: str = Path(..., description="The id of the run that produced the file."),
+    filename: str = Path(..., description="The name of the file to download."),
+) -> FileResponse:
+    if not settings.ENABLE_PUBLIC_RUN_FILE_ENDPOINT:
+        raise HTTPException(status_code=404, detail="Not found")
+    try:
+        file_path = _resolve_run_file_path(run_id, filename)
+        return FileResponse(file_path, filename=filename)
+    except HTTPException:
+        raise
+    except Exception:
+        LOG.error("Failed to download run file (public)", run_id=run_id, filename=filename, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @legacy_base_router.post(

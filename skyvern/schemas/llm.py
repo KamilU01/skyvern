@@ -16,6 +16,22 @@ _SETTINGS_DEFAULT = object()
 # Sentinel replaced in __post_init__; distinct from callers explicitly passing None.
 _DEFAULT_MAX_TOKENS = cast("int | None", _SETTINGS_DEFAULT)
 _DEFAULT_TEMPERATURE = cast("float | None", _SETTINGS_DEFAULT)
+_DEFAULT_TOP_P = cast("float | None", _SETTINGS_DEFAULT)
+_DEFAULT_TOP_K = cast("int | None", _SETTINGS_DEFAULT)
+_DEFAULT_MIN_P = cast("float | None", _SETTINGS_DEFAULT)
+_DEFAULT_PRESENCE_PENALTY = cast("float | None", _SETTINGS_DEFAULT)
+_DEFAULT_REPETITION_PENALTY = cast("float | None", _SETTINGS_DEFAULT)
+
+# Maps each settings-default config field to the Settings attribute it resolves from.
+_GENERATION_SETTING_BY_FIELD = {
+    "max_tokens": "LLM_CONFIG_MAX_TOKENS",
+    "temperature": "LLM_CONFIG_TEMPERATURE",
+    "top_p": "LLM_CONFIG_TOP_P",
+    "top_k": "LLM_CONFIG_TOP_K",
+    "min_p": "LLM_CONFIG_MIN_P",
+    "presence_penalty": "LLM_CONFIG_PRESENCE_PENALTY",
+    "repetition_penalty": "LLM_CONFIG_REPETITION_PENALTY",
+}
 
 
 def _assert_settings_defaults_resolved(*values: object) -> None:
@@ -23,17 +39,22 @@ def _assert_settings_defaults_resolved(*values: object) -> None:
         raise RuntimeError("settings default sentinel was not resolved")
 
 
-def _resolve_generation_defaults(config: object, max_tokens: object, temperature: object) -> None:
-    if max_tokens is _SETTINGS_DEFAULT or temperature is _SETTINGS_DEFAULT:
-        settings = _settings()
-        if max_tokens is _SETTINGS_DEFAULT:
-            object.__setattr__(config, "max_tokens", settings.LLM_CONFIG_MAX_TOKENS)
-        if temperature is _SETTINGS_DEFAULT:
-            object.__setattr__(config, "temperature", settings.LLM_CONFIG_TEMPERATURE)
+def _resolve_generation_defaults(config: object) -> None:
+    """Replace any unresolved settings-default sentinels with their Settings values.
+
+    Fields default to a private sentinel so callers can still pass None explicitly. Only the
+    fields a config actually declares are considered; absent fields are skipped. Settings are
+    read lazily and only when at least one sentinel needs resolving.
+    """
+    settings = None
+    for field_name, setting_name in _GENERATION_SETTING_BY_FIELD.items():
+        if getattr(config, field_name, None) is _SETTINGS_DEFAULT:
+            if settings is None:
+                settings = _settings()
+            object.__setattr__(config, field_name, getattr(settings, setting_name))
 
     _assert_settings_defaults_resolved(
-        getattr(config, "max_tokens"),
-        getattr(config, "temperature"),
+        *(getattr(config, field_name) for field_name in _GENERATION_SETTING_BY_FIELD if hasattr(config, field_name))
     )
 
 
@@ -90,10 +111,15 @@ class LLMConfig(LLMConfigBase):
     max_tokens: int | None = _DEFAULT_MAX_TOKENS
     max_completion_tokens: int | None = None
     temperature: float | None = _DEFAULT_TEMPERATURE
+    top_p: float | None = _DEFAULT_TOP_P
+    top_k: int | None = _DEFAULT_TOP_K
+    min_p: float | None = _DEFAULT_MIN_P
+    presence_penalty: float | None = _DEFAULT_PRESENCE_PENALTY
+    repetition_penalty: float | None = _DEFAULT_REPETITION_PENALTY
     reasoning_effort: str | None = None
 
     def __post_init__(self) -> None:
-        _resolve_generation_defaults(self, self.max_tokens, self.temperature)
+        _resolve_generation_defaults(self)
 
 
 @dataclass(frozen=True)
@@ -145,6 +171,11 @@ class LLMRouterConfig(LLMConfigBase):
     max_completion_tokens: int | None = None
     reasoning_effort: str | None = None
     temperature: float | None = _DEFAULT_TEMPERATURE
+    top_p: float | None = _DEFAULT_TOP_P
+    top_k: int | None = _DEFAULT_TOP_K
+    min_p: float | None = _DEFAULT_MIN_P
+    presence_penalty: float | None = _DEFAULT_PRESENCE_PENALTY
+    repetition_penalty: float | None = _DEFAULT_REPETITION_PENALTY
 
     def __post_init__(self) -> None:
-        _resolve_generation_defaults(self, self.max_tokens, self.temperature)
+        _resolve_generation_defaults(self)

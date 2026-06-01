@@ -1854,6 +1854,12 @@ class LLMAPIHandlerFactory:
         if llm_config.reasoning_effort is not None:
             params["reasoning_effort"] = llm_config.reasoning_effort
 
+        # Optional generation parameters: only forwarded when explicitly configured (non-None).
+        for key in ("top_p", "top_k", "min_p", "presence_penalty", "repetition_penalty"):
+            value = getattr(llm_config, key, None)
+            if value is not None:
+                params[key] = value
+
         return params
 
     @classmethod
@@ -2353,6 +2359,10 @@ class LLMCaller:
                 openai_params["max_tokens"] = active_parameters["max_tokens"]
             if "temperature" in active_parameters:
                 openai_params["temperature"] = active_parameters["temperature"]
+            # Forward OpenAI-supported sampling params when present (OpenAI client rejects top_k/min_p).
+            for key in ("top_p", "presence_penalty"):
+                if key in active_parameters:
+                    openai_params[key] = active_parameters[key]
 
             completion = await self.openai_client.chat.completions.create(
                 model=self.llm_key,

@@ -77,6 +77,8 @@ class Settings(BaseSettings):
     DOWNLOAD_PATH: str = f"{REPO_ROOT_DIR}/downloads"
     BROWSER_ACTION_TIMEOUT_MS: int = 5000
     CACHED_ACTION_DELAY_SECONDS: float = 1.0
+    # How long to wait before retrying a scrape when the page returns no elements.
+    EMPTY_PAGE_RETRY_WAIT_SECONDS: float = 15.0
     # Page readiness settings for cached action execution
     # These help prevent cached actions from executing before the page is fully loaded
     PAGE_READY_NETWORK_IDLE_TIMEOUT_MS: float = 3000  # Wait for network idle (short timeout)
@@ -240,6 +242,13 @@ class Settings(BaseSettings):
     LLM_CONFIG_TIMEOUT: int = 300
     LLM_CONFIG_MAX_TOKENS: int = 4096
     LLM_CONFIG_TEMPERATURE: float = 0
+    # Optional generation parameters. When left as None they are not sent to the provider,
+    # preserving native v1.0.36 behavior. Set via env vars to tune sampling.
+    LLM_CONFIG_TOP_P: float | None = None
+    LLM_CONFIG_TOP_K: int | None = None
+    LLM_CONFIG_MIN_P: float | None = None
+    LLM_CONFIG_PRESENCE_PENALTY: float | None = None
+    LLM_CONFIG_REPETITION_PENALTY: float | None = None
     LLM_CONFIG_SUPPORT_VISION: bool = True  # Whether the model supports vision
     LLM_CONFIG_ADD_ASSISTANT_PREFIX: bool = False  # Whether to add assistant prefix
     # LLM PROVIDER SPECIFIC
@@ -473,6 +482,12 @@ class Settings(BaseSettings):
     SKYVERN_BASE_URL: str = "https://api.skyvern.com"
     SKYVERN_API_KEY: str = "PLACEHOLDER"
 
+    # When enabled, downloaded run files are exposed over an unauthenticated public HTTP
+    # endpoint (/v1/public/runs/{run_id}/files/{filename}) and LocalStorage.get_downloaded_files
+    # returns those HTTP URLs instead of file:// URIs. Default off to preserve native behavior;
+    # enable for deployments that need webhook-accessible no-auth file links.
+    ENABLE_PUBLIC_RUN_FILE_ENDPOINT: bool = False
+
     SKYVERN_BROWSER_VNC_PORT: int = 6080
     """
     The websockified port on which the VNC server of a persistent browser is
@@ -562,6 +577,20 @@ class Settings(BaseSettings):
     """Interval in minutes for the cleanup cron job."""
     CLEANUP_STALE_TASK_THRESHOLD_HOURS: int = 24
     """Tasks/workflows not updated for this many hours are considered stale (stuck)."""
+
+    # Recording / disk cleanup settings (used by the /health endpoint).
+    RECORDING_CLEANUP_ENABLED: bool = True
+    """When the /health endpoint runs, trigger disk cleanup if free space drops below the threshold."""
+    RECORDING_CLEANUP_DISK_THRESHOLD_PERCENT: float = 5.0
+    """Trigger cleanup when free space on VIDEO_PATH/ARTIFACT_STORAGE_PATH drops below this percentage."""
+    RECORDING_CLEANUP_RETENTION_DAYS: int = 14
+    """Age-based cleanup removes files older than this many days from the cleanup roots."""
+    HEALTHCHECK_REQUIRED_FILE: str = "/app/.streamlit/secrets.toml"
+    """If set, the /health endpoint reports unhealthy when this file is missing. Empty string disables the check."""
+
+    # Opt-in escape hatch: disable TLS verification before importing tiktoken. Only needed in
+    # environments without proper CA certificates. Off by default — do not enable in production.
+    TIKTOKEN_ALLOW_INSECURE_SSL: bool = False
 
     # OpenTelemetry Settings
     OTEL_ENABLED: bool = False

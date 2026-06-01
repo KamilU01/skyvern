@@ -245,7 +245,13 @@ class RealBrowserState(BrowserState):
                 try:
                     async with asyncio.timeout(settings.BROWSER_ACTION_TIMEOUT_MS / 1000):
                         if page.video:
-                            self.browser_artifacts.video_artifacts[index].video_path = await page.video.path()
+                            video_path = await page.video.path()
+                            self.browser_artifacts.video_artifacts[index].video_path = video_path
+                            LOG.info("Video recording path obtained", video_path=video_path, page_url=page.url)
+                        else:
+                            LOG.warning(
+                                "Video recording NOT available for page - page.video is None", page_url=page.url
+                            )
                 except asyncio.TimeoutError:
                     LOG.info("Timeout to get the page video, skip the exception")
                 except Exception:
@@ -259,7 +265,11 @@ class RealBrowserState(BrowserState):
         try:
             async with asyncio.timeout(settings.BROWSER_ACTION_TIMEOUT_MS / 1000):
                 if page.video:
-                    self.browser_artifacts.video_artifacts[index].video_path = await page.video.path()
+                    video_path = await page.video.path()
+                    self.browser_artifacts.video_artifacts[index].video_path = video_path
+                    LOG.info("Video recording path obtained", video_path=video_path, page_url=page.url)
+                else:
+                    LOG.warning("Video recording NOT available for page - page.video is None", page_url=page.url)
         except asyncio.TimeoutError:
             LOG.info("Timeout to get the page video, skip the exception")
         except Exception:

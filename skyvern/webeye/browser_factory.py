@@ -100,10 +100,7 @@ def _build_host_resolver_rules(request_rules: str | None) -> str:
             raw_rule = raw_rule.strip()
             if not raw_rule or ":" not in raw_rule:
                 continue
-            host, ip_address = (
-                part.strip()
-                for part in raw_rule.split(":", 1)
-            )
+            host, ip_address = (part.strip() for part in raw_rule.split(":", 1))
             if host and ip_address:
                 rules.append(f"MAP {host} {ip_address}")
     return ",".join(rules)
@@ -284,6 +281,8 @@ class BrowserContextFactory:
         host_resolver_rules: str | None = None,
     ) -> dict[str, Any]:
         video_dir = f"{settings.VIDEO_PATH}/{datetime.utcnow().strftime('%Y-%m-%d')}"
+        os.makedirs(video_dir, exist_ok=True)
+        LOG.info("Video recording directory configured", video_dir=video_dir, exists=os.path.exists(video_dir))
         har_dir = (
             f"{settings.HAR_PATH}/{datetime.utcnow().strftime('%Y-%m-%d')}/{BrowserContextFactory.get_subdir()}.har"
         )

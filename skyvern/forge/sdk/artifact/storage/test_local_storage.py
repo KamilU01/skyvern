@@ -1,7 +1,10 @@
+import os
+
 import pytest
 from freezegun import freeze_time
 
 from skyvern.config import settings
+from skyvern.forge.sdk.api.files import get_download_dir
 from skyvern.forge.sdk.artifact.models import ArtifactType, LogEntityType
 from skyvern.forge.sdk.artifact.storage.local import LocalStorage
 from skyvern.forge.sdk.artifact.storage.test_helpers import (
@@ -105,3 +108,53 @@ class TestLocalStorageBuildURIs:
             uri
             == f"file://{local_storage.artifact_path}/{settings.ENV}/{TEST_ORGANIZATION_ID}/ai_suggestions/{TEST_AI_SUGGESTION_ID}/2025-06-09T12:00:00_artifact123_screenshot_llm.png"
         )
+
+
+class TestLocalStorageDownloadedFiles:
+    """Tests for get_downloaded_files URL behavior gated by ENABLE_PUBLIC_RUN_FILE_ENDPOINT."""
+
+    @staticmethod
+    def _write_file(run_id: str, filename: str, content: bytes) -> str:
+        download_dir = get_download_dir(run_id=run_id)
+        os.makedirs(download_dir, exist_ok=True)
+        file_path = os.path.join(download_dir, filename)
+        with open(file_path, "wb") as f:
+            f.write(content)
+        return file_path
+
+    @pytest.mark.asyncio
+    async def test_returns_file_uri_by_default(
+        self, local_storage: LocalStorage, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(settings, "ENABLE_PUBLIC_RUN_FILE_ENDPOINT", False, raising=False)
+        run_id = "test_run_file_uri"
+        file_path = self._write_file(run_id, "doc_default.pdf", b"default content")
+        try:
+            files = await local_storage.get_downloaded_files(TEST_ORGANIZATION_ID, run_id)
+            match = [f for f in files if f.filename == "doc_default.pdf"]
+            assert len(match) == 1
+            assert match[0].url.startswith("file://")
+            assert match[0].checksum is not None
+        finally:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+
+    @pytest.mark.asyncio
+    async def test_returns_http_url_when_enabled(
+        self, local_storage: LocalStorage, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(settings, "ENABLE_PUBLIC_RUN_FILE_ENDPOINT", True, raising=False)
+        run_id = "test_run_http_url"
+        file_path = self._write_file(run_id, "doc_http.pdf", b"http content")
+        try:
+            files = await local_storage.get_downloaded_files(TEST_ORGANIZATION_ID, run_id)
+            match = [f for f in files if f.filename == "doc_http.pdf"]
+            assert len(match) == 1
+            url = match[0].url
+            assert not url.startswith("file://")
+            assert url.startswith(settings.SKYVERN_BASE_URL.rstrip("/"))
+            assert f"/v1/public/runs/{run_id}/files/doc_http.pdf" in url
+            assert match[0].checksum is not None
+        finally:
+            if os.path.exists(file_path):
+                os.remove(file_path)

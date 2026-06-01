@@ -688,6 +688,41 @@ class SkyvernElement:
             return None
         return locator
 
+    async def find_nearby_file_input(self) -> Locator | None:
+        """
+        Sometimes the AI targets the button (e.g. "Select File") instead of the container.
+        The file input might be a sibling or in a parent/grandparent container.
+        Search up to 3 levels up the DOM tree.
+        """
+        current = self.get_locator()
+
+        # Search up to 3 levels of parents
+        for level in range(1, 4):
+            parent = current.locator("..")
+            file_input = parent.locator('input[type="file"]')
+
+            count = await file_input.count()
+            if count == 1:
+                LOG.debug(
+                    "Found file input nearby",
+                    element_id=self.get_id(),
+                    level=level,
+                )
+                return file_input
+            elif count > 1:
+                # Multiple file inputs found, ambiguous - stop searching
+                LOG.debug(
+                    "Multiple file inputs found at parent level, stopping search",
+                    element_id=self.get_id(),
+                    level=level,
+                    count=count,
+                )
+                return None
+
+            current = parent
+
+        return None
+
     async def get_attr(
         self,
         attr_name: str,

@@ -54,6 +54,177 @@ from skyvern.webeye.scraper.scraped_page import ScrapedPage
 
 LOG = structlog.get_logger()
 
+# Common file extensions that indicate a file URL
+FILE_EXTENSIONS = {
+    ".pdf",
+    ".csv",
+    ".xlsx",
+    ".xls",
+    ".doc",
+    ".docx",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".txt",
+    ".zip",
+}
+
+
+def extract_file_urls_from_text(text: str | None) -> list[str]:
+    """
+    Extract file URLs from text (navigation_goal, navigation_payload).
+    Looks for URLs that point to files based on common file extensions.
+    """
+    if not text:
+        return []
+
+    # Regex to find URLs
+    url_pattern = re.compile(r'https?://[^\s<>"\'`\)\]\}]+', re.IGNORECASE)
+
+    urls = url_pattern.findall(text)
+    file_urls = []
+
+    for url in urls:
+        # Clean up trailing punctuation that might have been captured
+        url = url.rstrip(".,;:!?")
+
+        # Check if URL ends with a known file extension
+        lower_url = url.lower()
+        for ext in FILE_EXTENSIONS:
+            if lower_url.endswith(ext):
+                file_urls.append(url)
+                break
+
+    return file_urls
+
+
+def parse_attached_files(text: str | None) -> dict[str, str]:
+    """
+    Parse attached files section from navigation_goal using the format:
+
+    Attached files:
+    - filename.pdf: https://example.com/file.pdf
+    - document.csv: https://example.com/doc.csv
+
+    Also supports variations:
+    - filename.pdf - https://example.com/file.pdf
+    - filename.pdf https://example.com/file.pdf
+
+    Returns: {"filename.pdf": "https://...", ...} with lowercase keys for matching
+    """
+    if not text:
+        return {}
+
+    files: dict[str, str] = {}
+
+    # Pattern to match: "- filename.ext: url" or "- filename.ext - url" or similar
+    # Captures: filename with extension, then URL
+    pattern = re.compile(r"-\s*([^\s:]+\.[a-zA-Z0-9]+)\s*[-:]?\s*(https?://[^\s\n]+)", re.IGNORECASE | re.MULTILINE)
+
+    for match in pattern.finditer(text):
+        filename = match.group(1).strip()
+        url = match.group(2).strip().rstrip(".,;:!?")
+
+        # Store with lowercase key for case-insensitive matching
+        files[filename.lower()] = url
+        LOG.debug("Parsed attached file (section format)", filename=filename, url=url)
+
+    if files:
+        LOG.info("Parsed attached files from section format", count=len(files), files=list(files.keys()))
+
+    return files
+
+
+def parse_inline_file_references(text: str | None) -> dict[str, str]:
+    """
+    Parse inline file references from navigation_goal using markdown-like format:
+    [filename](url)
+
+    Example:
+    "Upload the [Pades.pdf](https://example.com/pades.pdf) file to the form"
+
+    Returns: {"filename.pdf": "https://...", ...} with lowercase keys for matching
+    """
+    if not text:
+        return {}
+
+    files: dict[str, str] = {}
+
+    # Pattern to match: [filename](url) - markdown-like syntax
+    # Captures: filename (can include extension), then URL
+    pattern = re.compile(r"\[([^\]]+)\]\s*\((https?://[^)]+)\)", re.IGNORECASE)
+
+    for match in pattern.finditer(text):
+        filename = match.group(1).strip()
+        url = match.group(2).strip()
+
+        # Store with lowercase key for case-insensitive matching
+        files[filename.lower()] = url
+        LOG.debug("Parsed inline file reference", filename=filename, url=url)
+
+    if files:
+        LOG.info("Parsed inline file references", count=len(files), files=list(files.keys()))
+
+    return files
+
+
+def find_matching_file_url(action: Action, attached_files: dict[str, str], used_files: set[str]) -> str | None:
+    """
+    Find the best matching file URL for an action based on filename mentions.
+
+    Args:
+        action: The action to find a file for
+        attached_files: Dict of {filename: url} from parse_attached_files
+        used_files: Set of filenames already assigned to other actions
+
+    Returns: Matching URL or None
+    """
+    if not attached_files:
+        return None
+
+    # Build search text from action's context fields
+    search_parts = []
+    if hasattr(action, "response") and action.response:
+        search_parts.append(str(action.response))
+    if hasattr(action, "reasoning") and action.reasoning:
+        search_parts.append(str(action.reasoning))
+    if hasattr(action, "intention") and action.intention:
+        search_parts.append(str(action.intention))
+
+    search_text = " ".join(search_parts).lower()
+
+    # Try to find a filename mentioned in the action's context
+    for filename, url in attached_files.items():
+        if filename in used_files:
+            continue
+
+        # Check if filename (without extension) or full filename is mentioned
+        filename_no_ext = filename.rsplit(".", 1)[0] if "." in filename else filename
+
+        if filename in search_text or filename_no_ext in search_text:
+            LOG.info(
+                "Matched file to action by filename mention",
+                filename=filename,
+                url=url,
+                action_type=type(action).__name__,
+            )
+            return url
+
+    # Fallback: return first unused file (for sequential assignment)
+    for filename, url in attached_files.items():
+        if filename not in used_files:
+            LOG.info(
+                "Assigned file to action by order (no filename match)",
+                filename=filename,
+                url=url,
+                action_type=type(action).__name__,
+            )
+            return url
+
+    return None
+
 
 def parse_action(
     action: Dict[str, Any],
@@ -318,6 +489,63 @@ def parse_actions(
             all_element_ids=all_element_ids,
         )
     ############################ This part of code might not be needed ############################
+
+    # Safety net: inject file_url from navigation_goal into actions that need it but are missing it.
+    # This compensates for the LLM not following instructions to extract file URLs. It is additive
+    # to (and runs before) the handler's native URL-recovery logic.
+    goal_text = str(task.navigation_goal or "") + " " + str(task.navigation_payload or "")
+
+    # Try structured format first ("Attached files: - name.pdf: url")
+    attached_files = parse_attached_files(goal_text)
+
+    # Also parse inline markdown-like references: [filename](url)
+    inline_files = parse_inline_file_references(goal_text)
+    if inline_files:
+        # Merge inline files with attached files (inline takes precedence for duplicates)
+        attached_files = {**attached_files, **inline_files}
+
+    # Fallback to simple URL extraction if no structured format found
+    if not attached_files:
+        file_urls = extract_file_urls_from_text(goal_text)
+        if file_urls:
+            # Create a simple mapping with generic names
+            attached_files = {f"file_{i + 1}": url for i, url in enumerate(file_urls)}
+
+    if attached_files:
+        used_files: set[str] = set()
+
+        for action_instance in actions:
+            # Check for ClickAction or UploadFileAction that might need file_url
+            if isinstance(action_instance, ClickAction) and not action_instance.file_url:
+                matched_url = find_matching_file_url(action_instance, attached_files, used_files)
+                if matched_url:
+                    LOG.info(
+                        "Injecting file_url into ClickAction",
+                        task_id=task.task_id,
+                        file_url=matched_url,
+                    )
+                    action_instance.file_url = matched_url
+                    # Mark the matched file as used
+                    for filename, url in attached_files.items():
+                        if url == matched_url:
+                            used_files.add(filename)
+                            break
+
+            elif isinstance(action_instance, UploadFileAction) and not action_instance.file_url:
+                matched_url = find_matching_file_url(action_instance, attached_files, used_files)
+                if matched_url:
+                    LOG.info(
+                        "Injecting file_url into UploadFileAction",
+                        task_id=task.task_id,
+                        file_url=matched_url,
+                    )
+                    action_instance.file_url = matched_url
+                    # Mark the matched file as used
+                    for filename, url in attached_files.items():
+                        if url == matched_url:
+                            used_files.add(filename)
+                            break
+
     return actions
 
 

@@ -6,6 +6,7 @@
 import os
 import uuid
 from contextlib import asynccontextmanager
+from dataclasses import asdict
 from datetime import datetime
 from typing import Any, AsyncGenerator, Awaitable, Callable
 
@@ -37,6 +38,7 @@ from skyvern.forge.sdk.routes import internal_auth
 from skyvern.forge.sdk.routes.google_oauth import google_oauth_router
 from skyvern.forge.sdk.routes.google_sheets import google_sheets_router
 from skyvern.forge.sdk.routes.routers import base_router, legacy_base_router, legacy_v2_router
+from skyvern.services.recording_cleanup import DiskSpaceInfo, run_cleanup_if_needed
 from skyvern.forge.sdk.services.local_org_auth_token_service import (
     ensure_local_api_key,
     ensure_local_org,
@@ -267,6 +269,33 @@ def create_api_app() -> FastAPI:
     fastapi_app.include_router(google_oauth_router, prefix="/api/v1/google", include_in_schema=False)
     fastapi_app.include_router(google_sheets_router, prefix="/v1/google/sheets", include_in_schema=False)
     fastapi_app.include_router(google_sheets_router, prefix="/api/v1/google/sheets", include_in_schema=False)
+
+    @fastapi_app.get("/health", tags=["Health"])
+    async def healthcheck() -> JSONResponse:
+        health = await run_cleanup_if_needed()
+        status_code = 200 if health.status == "healthy" else 503
+
+        def _sanitize_disk_info(disk_info: DiskSpaceInfo | None) -> dict[str, Any] | None:
+            if disk_info is None:
+                return None
+            if settings.is_cloud_environment():
+                return {"exists": disk_info.exists, "free_percent": disk_info.free_percent}
+            return asdict(disk_info)
+
+        message = health.message
+        if settings.is_cloud_environment() and settings.HEALTHCHECK_REQUIRED_FILE:
+            message = message.replace(settings.HEALTHCHECK_REQUIRED_FILE, "<configured-file>")
+
+        content: dict[str, Any] = {
+            "status": health.status,
+            "message": message,
+            "required_file_ok": health.required_file_ok,
+            "video_path_disk": _sanitize_disk_info(health.video_path_disk),
+            "artifact_path_disk": _sanitize_disk_info(health.artifact_path_disk),
+            "cleanup_triggered": health.cleanup_triggered,
+            "cleanup_result": asdict(health.cleanup_result) if health.cleanup_result else None,
+        }
+        return JSONResponse(status_code=status_code, content=content)
 
     # local dev endpoints
     if settings.ENV == "local":

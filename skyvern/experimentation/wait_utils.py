@@ -9,6 +9,7 @@ import asyncio
 import structlog
 from cachetools import TTLCache
 
+from skyvern.config import settings
 from skyvern.experimentation.wait_config import WaitConfig, get_wait_config_from_experiment
 
 LOG = structlog.get_logger()
@@ -127,5 +128,5 @@ async def empty_page_retry_wait(
     their callers. Defaults are reasonable for this low-level scraping utility.
     """
     wait_config = await get_or_create_wait_config(task_id, workflow_run_id, organization_id)
-    wait_seconds = get_wait_time(wait_config, "empty_page_retry_wait", default=3.0)
+    wait_seconds = get_wait_time(wait_config, "empty_page_retry_wait", default=settings.EMPTY_PAGE_RETRY_WAIT_SECONDS)
     await asyncio.sleep(wait_seconds)

@@ -1745,6 +1745,14 @@ async def handle_upload_file_action(
             locator = file_input_locator
             is_file_input = True
 
+    if not is_file_input:
+        LOG.info("Trying to find file input nearby (siblings/parent)", action=action)
+        nearby_input_locator = await skyvern_element.find_nearby_file_input()
+        if nearby_input_locator:
+            LOG.info("Found file input nearby", action=action)
+            locator = nearby_input_locator
+            is_file_input = True
+
     if is_file_input:
         LOG.info("Taking UploadFileAction. Found file input tag", action=action)
         if file_path:
@@ -1752,6 +1760,19 @@ async def handle_upload_file_action(
                 file_path,
                 timeout=settings.BROWSER_ACTION_TIMEOUT_MS,
             )
+
+            # Dispatch native events so React/Vue/Angular components detect the change.
+            # set_input_files may not trigger synthetic event handlers on its own.
+            try:
+                await locator.dispatch_event("input")
+                await locator.dispatch_event("change")
+                LOG.info("Dispatched input and change events after file upload", action=action)
+            except Exception as e:
+                LOG.warning(
+                    "Failed to dispatch events after file upload, continuing anyway",
+                    action=action,
+                    error=str(e),
+                )
 
             # Sleep for 10 seconds after uploading a file to let the page process it
             await asyncio.sleep(10)
@@ -2842,9 +2863,40 @@ async def chain_click(
 
         if action.file_url and not is_filechooser_trigger:
             LOG.warning(
-                "Action has file_url, but filechoose even hasn't been triggered. Upload file attempt seems to fail",
+                "Action has file_url, but filechooser event hasn't been triggered. Trying fallback approach.",
                 action=action,
             )
+
+            # Fallback: try to find a file input in the nearby DOM and upload directly.
+            try:
+                file_input_locator = await skyvern_element.find_file_input_in_children()
+                if not file_input_locator:
+                    file_input_locator = await skyvern_element.find_nearby_file_input()
+
+                if file_input_locator and file:
+                    LOG.info(
+                        "Fallback: Found file input, attempting direct upload via set_input_files",
+                        action=action,
+                    )
+                    await file_input_locator.set_input_files(
+                        file,
+                        timeout=settings.BROWSER_ACTION_TIMEOUT_MS,
+                    )
+                    # Dispatch events to trigger React/Vue handlers
+                    try:
+                        await file_input_locator.dispatch_event("input")
+                        await file_input_locator.dispatch_event("change")
+                    except Exception:
+                        pass
+                    await asyncio.sleep(10)
+                    return [ActionSuccess()]
+            except Exception as fallback_error:
+                LOG.warning(
+                    "Fallback file upload also failed",
+                    action=action,
+                    error=str(fallback_error),
+                )
+
             return [ActionFailure(WrongElementToUploadFile(action.element_id))]
 
 

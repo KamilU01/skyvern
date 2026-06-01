@@ -3,6 +3,7 @@ import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import BinaryIO
+from urllib.parse import quote
 
 import aiofiles
 import structlog
@@ -399,8 +400,16 @@ class LocalStorage(BaseStorage):
                 except OSError:
                     LOG.warning("Failed to get local downloaded file size", path=path, exc_info=True)
                     file_size = None
+                if settings.ENABLE_PUBLIC_RUN_FILE_ENDPOINT and run_id:
+                    # Expose the file over the public, no-auth HTTP endpoint so external clients
+                    # (e.g. webhooks) can fetch it without an API key. Gated by config; defaults
+                    # to the native file:// URI so behavior is unchanged unless explicitly enabled.
+                    base = settings.SKYVERN_BASE_URL.rstrip("/")
+                    url = f"{base}/v1/public/runs/{run_id}/files/{quote(file_or_folder)}"
+                else:
+                    url = f"file://{path}"
                 file_info = FileInfo(
-                    url=f"file://{path}",
+                    url=url,
                     checksum=checksum,
                     filename=file_or_folder,
                     file_size=file_size,
